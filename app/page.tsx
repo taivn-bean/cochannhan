@@ -1,4 +1,6 @@
 import { BookGrid } from "@/components/book/book-grid";
+import RegisterSW from "./register-sw";
+import InstallPrompt from "@/components/install-prompt";
 
 export default function HomePage() {
   return (
@@ -11,7 +13,9 @@ export default function HomePage() {
           </p>
         </div>
         <div className="p-4 sm:p-10">
+          <InstallPrompt />
           <BookGrid />
+          <RegisterSW />
         </div>
       </main>
     </div>

@@ -10,15 +10,27 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 export const metadata: Metadata = {
   title: "Cổ Chân Nhân",
   description: "Cổ Chân Nhân",
+  generator: "Next.js",
   manifest: "/manifest.json",
-  generator: "Taivn",
+  keywords: [
+    "cổ chân nhân",
+    "đọc truyện",
+    "truyện cổ chân nhân",
+    "cổ chân nhân",
+  ],
+  authors: [{ name: "Your Name" }],
+  icons: [
+    { rel: "apple-touch-icon", url: "/favicon/icon-192x192.png" },
+    { rel: "icon", url: "/favicon/icon-192x192.png" },
+  ],
 };
+
 export const viewport: Viewport = {
   themeColor: "#000000",
-  width: "device-width",
+  minimumScale: 1,
   initialScale: 1,
-  maximumScale: 1,
-  
+  width: "device-width",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -32,11 +44,18 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <link rel="icon" href="/favicon/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/favicon/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Cổ Chân Nhân" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Cổ Chân Nhân" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="msapplication-config" content="/browserconfig.xml" />
+        <meta name="msapplication-TileColor" content="#3b82f6" />
+        <meta name="msapplication-tap-highlight" content="no" />
       </head>
       <body className={fontVars} suppressHydrationWarning>
         <ThemeProvider
