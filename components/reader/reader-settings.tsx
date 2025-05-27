@@ -41,7 +41,7 @@ export function ReaderSettings({ settings, onSettingsChange }: ReaderSettingsPro
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
+        <Button variant="outline" size="sm" className="ml-auto flex items-center gap-2">
           <Settings className="h-4 w-4" />
           <span className="hidden sm:inline">Tùy chỉnh</span>
         </Button>
@@ -122,25 +122,6 @@ export function ReaderSettings({ settings, onSettingsChange }: ReaderSettingsPro
                 <SelectItem value="sepia">📜 Sepia</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Preview */}
-          <div className="border rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-2">Xem trước:</p>
-            <div
-              style={{
-                fontSize: `${Math.max(settings.fontSize - 2, 10)}px`,
-                fontFamily: settings.fontFamily,
-                lineHeight: settings.lineHeight,
-                backgroundColor:
-                  settings.theme === "dark" ? "#1a1a1a" : settings.theme === "sepia" ? "#f4f1ea" : "#ffffff",
-                color: settings.theme === "dark" ? "#e5e5e5" : settings.theme === "sepia" ? "#5c4b37" : "#000000",
-                padding: "8px",
-                borderRadius: "4px",
-              }}
-            >
-              Đây là đoạn văn mẫu để bạn xem trước cài đặt. Hãy điều chỉnh các thông số để có trải nghiệm đọc tốt nhất.
-            </div>
           </div>
         </div>
       </PopoverContent>

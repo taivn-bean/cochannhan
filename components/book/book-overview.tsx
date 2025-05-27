@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,9 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   BookOpen,
   Play,
@@ -25,8 +20,15 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react";
-import { useOfflineStatus } from "@/hooks/use-offline";
-import { Book, ChapterListItem } from "@/types/type";
+import { Book, Chapter, ChapterListItem } from "@/types/type";
+import { useRouter } from "next/navigation";
+import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
+import { LOCAL_STORAGE_KEY } from "@/constants/common";
+import { Progress } from "../ui/progress";
+import { Button } from "../ui/button";
+import { ScrollArea } from "../ui/scroll-area";
+import { Badge } from "../ui/badge";
+import { calculateProgress } from "@/lib/books";
 
 interface BookOverviewProps {
   book: Book;
@@ -35,11 +37,10 @@ interface BookOverviewProps {
 
 export function BookOverview({ book, chapters }: BookOverviewProps) {
   const router = useRouter();
-  const isOffline = useOfflineStatus();
-  const [currentChapter, setCurrentChapter] = useState<string>("");
-  const [progress, setProgress] = useState(0);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
-  const [isDownloaded, setIsDownloaded] = useState(false);
+  const currentChapter = useReadLocalStorage<Chapter | null>(
+    LOCAL_STORAGE_KEY.CURRENT_CHAPTER(book.slug)
+  );
 
   useEffect(() => {
     const savedBookmarks = localStorage.getItem(`book-${book.slug}-bookmarks`);
@@ -47,52 +48,11 @@ export function BookOverview({ book, chapters }: BookOverviewProps) {
     if (savedBookmarks) {
       setBookmarks(JSON.parse(savedBookmarks));
     }
-
-    checkOfflineAvailability();
   }, [book.slug]);
-
-  const checkOfflineAvailability = async () => {
-    if ("caches" in window) {
-      const cache = await caches.open("ebook-content");
-      const cachedBook = await cache.match(`/${book.slug}`);
-      setIsDownloaded(!!cachedBook);
-    }
-  };
-
-  const downloadForOffline = async () => {
-    if ("caches" in window) {
-      try {
-        const cache = await caches.open("ebook-content");
-
-        // Cache book data and all chapters
-        await cache.put(`/${book.slug}`, new Response(JSON.stringify(book)));
-
-        // Cache each chapter content
-        for (const chapter of chapters) {
-          await cache.put(
-            `/${book.slug}/${chapter.slug}`,
-            new Response(JSON.stringify(chapter))
-          );
-        }
-
-        setIsDownloaded(true);
-
-        // Show success notification
-        if ("serviceWorker" in navigator && "Notification" in window) {
-          new Notification("Đã tải sách để đọc offline!", {
-            body: `"${book.title}" đã sẵn sàng để đọc offline`,
-            icon: "/icon-192x192.png",
-          });
-        }
-      } catch (error) {
-        console.error("Error downloading book for offline:", error);
-      }
-    }
-  };
 
   const handleContinueReading = () => {
     const chapter =
-      chapters.find((ch) => ch.id === currentChapter) || chapters[0];
+      chapters.find((ch) => ch.id === currentChapter?.id) || chapters[0];
     router.push(`/${book.slug}/${chapter.slug}`);
   };
 
@@ -108,21 +68,6 @@ export function BookOverview({ book, chapters }: BookOverviewProps) {
   return (
     <div className="container mx-auto px-4 py-6 sm:py-8">
       <div className="max-w-6xl mx-auto">
-        {/* Offline Status */}
-        {isOffline && (
-          <div className="mb-4 p-3 bg-orange-100 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-            <div className="flex items-center gap-2 text-orange-800 dark:text-orange-200">
-              <WifiOff className="h-4 w-4" />
-              <span className="text-sm">
-                Bạn đang offline.{" "}
-                {isDownloaded
-                  ? "Sách này có thể đọc offline."
-                  : "Tải sách để đọc offline."}
-              </span>
-            </div>
-          </div>
-        )}
-
         <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Book Info */}
           <div className="lg:col-span-1">
@@ -148,39 +93,59 @@ export function BookOverview({ book, chapters }: BookOverviewProps) {
                   {book.description}
                 </p>
 
-                {/* Book Stats */}
                 <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="space-y-1">
-                    <div className="text-2xl font-bold">{chapters.length}</div>
-                    <div className="text-xs text-muted-foreground">Chương</div>
+                  <div className="text-2xl font-bold">
+                    {chapters.length}{" "}
+                    <span className="text-xs text-muted-foreground">
+                      Chương
+                    </span>
                   </div>
                 </div>
 
-                {/* Progress */}
-                {progress > 0 && (
+                {currentChapter && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span>Tiến độ đọc</span>
-                      <span className="font-medium">{progress}%</span>
+                      <span className="font-medium">
+                        {calculateProgress(
+                          currentChapter.order,
+                          chapters.length
+                        )}
+                        %
+                      </span>
                     </div>
-                    <Progress value={progress} className="h-2" />
+                    <Progress value={calculateProgress(currentChapter.order, chapters.length)} className="h-2" />
                     <div className="text-xs text-muted-foreground">
-                      Chương {currentChapter} / {chapters.length}
+                      {currentChapter?.order} / {chapters.length}
                     </div>
                   </div>
                 )}
 
+                <Button
+                  onClick={handleStartFromBeginning}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Đọc từ đầu
+                </Button>
+
                 {/* Action Buttons */}
                 <div className="space-y-2">
-                  {progress > 0 ? (
-                    <Button
-                      onClick={handleContinueReading}
-                      className="w-full"
-                      size="lg"
-                    >
-                      <Play className="h-4 w-4 mr-2" />
-                      Đọc tiếp (Chương {currentChapter})
-                    </Button>
+                  {currentChapter ? (
+                    <>
+                      <Button
+                        onClick={handleContinueReading}
+                        className="w-full"
+                        size="lg"
+                      >
+                        <Play className="h-4 w-4 mr-2" />
+                        Đọc tiếp
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        {currentChapter.title}
+                      </span>
+                    </>
                   ) : (
                     <Button
                       onClick={handleStartFromBeginning}
@@ -191,37 +156,6 @@ export function BookOverview({ book, chapters }: BookOverviewProps) {
                       Bắt đầu đọc
                     </Button>
                   )}
-
-                  {progress > 0 && (
-                    <Button
-                      onClick={handleStartFromBeginning}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Đọc từ đầu
-                    </Button>
-                  )}
-
-                  {/* Offline Download */}
-                  <Button
-                    onClick={downloadForOffline}
-                    variant="outline"
-                    className="w-full"
-                    disabled={isDownloaded}
-                  >
-                    {isDownloaded ? (
-                      <>
-                        <Wifi className="h-4 w-4 mr-2" />
-                        Đã tải offline
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4 mr-2" />
-                        Tải để đọc offline
-                      </>
-                    )}
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -257,12 +191,8 @@ export function BookOverview({ book, chapters }: BookOverviewProps) {
                             <Bookmark className="h-4 w-4 text-yellow-500" />
                           )}
 
-                          {currentChapter === chapter.id && (
+                          {currentChapter?.id === chapter.id && (
                             <Badge variant="secondary">Đang đọc</Badge>
-                          )}
-
-                          {currentChapter > chapter.id && (
-                            <Badge variant="default">Đã đọc</Badge>
                           )}
                         </div>
                       </div>

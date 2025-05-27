@@ -9,6 +9,8 @@ import { useLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEY } from "@/constants/common";
 import { useServices } from "@/hooks/use-services";
 import { Chapter } from "@/types/type";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 export default function ChapterPage() {
   const params = useParams();
@@ -34,6 +36,10 @@ export default function ChapterPage() {
       lineHeight: 1.6,
     }
   );
+  const [, setCurrentChapter] = useLocalStorage<Chapter | null>(
+    LOCAL_STORAGE_KEY.CURRENT_CHAPTER(bookSlug),
+    null
+  );
   const [readerSettings, setReaderSettings] = useState(localReaderSettings);
 
   useEffect(() => {
@@ -44,10 +50,7 @@ export default function ChapterPage() {
         // Save current chapter to localStorage
         if (chapterData) {
           setChapterData(chapterData);
-          localStorage.setItem(
-            LOCAL_STORAGE_KEY.CURRENT_CHAPTER(bookSlug),
-            chapterData.currentChapter?.id?.toString() ?? ""
-          );
+          setCurrentChapter(chapterData.currentChapter);
         }
       } catch (error) {
         console.error("Error loading book:", error);
@@ -95,7 +98,11 @@ export default function ChapterPage() {
       data-theme={readerSettings.theme}
     >
       <div className="flex flex-col h-[calc(100vh-3.5rem)]">
-        <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center gap-4  p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <Button>
+            <ArrowLeft />
+            Back
+          </Button>
           {book && chapterData.currentChapter && (
             <ChapterMenu
               chapterList={chapterList}
