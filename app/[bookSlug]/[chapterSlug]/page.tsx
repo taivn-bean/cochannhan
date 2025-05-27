@@ -69,26 +69,13 @@ export default function ChapterPage() {
     setLocalReaderSettings(readerSettings);
   }, [readerSettings]);
 
-  if (!book) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 text-center">
-          <h1 className="text-2xl font-bold mb-4">Không tìm thấy sách</h1>
-          <p className="text-muted-foreground">
-            Slug "{bookSlug}" không tồn tại trong hệ thống.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div
       className="min-h-screen bg-background"
       data-theme={readerSettings.theme}
     >
       <div className="flex flex-col h-[calc(100vh-3.5rem)]">
-        <div className="flex items-center gap-4  p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center gap-4 p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
           <Button onClick={() => router.replace(`/${bookSlug}`)}>
             <ArrowLeft />
             Back
@@ -107,7 +94,7 @@ export default function ChapterPage() {
             />
           )}
         </div>
-        {chapterData.currentChapter && (
+        {chapterData.currentChapter && book && (
           <ReaderContent
             book={book}
             currentChapter={chapterData.currentChapter}

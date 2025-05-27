@@ -33,10 +33,11 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Cổ Chân Nhân" />
       </head>
-      <body className={fontVars}>
+      <body className={fontVars} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
+
           enableSystem
           disableTransitionOnChange
         >

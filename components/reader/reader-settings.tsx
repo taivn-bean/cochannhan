@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/popover";
 import { Settings, Type, Palette, RotateCcw } from "lucide-react";
 import { fontMap } from "@/app/fontMap";
+import { useTheme } from "next-themes";
 
 interface ReaderSettings {
   fontSize: number;
@@ -35,12 +36,16 @@ export function ReaderSettings({
   onSettingsChange,
 }: ReaderSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const updateSetting = (key: keyof ReaderSettings, value: any) => {
     onSettingsChange({
       ...settings,
       [key]: value,
     });
+    if (key === "theme") {
+      setTheme(value);
+    }
   };
 
   const resetSettings = () => {
@@ -50,6 +55,7 @@ export function ReaderSettings({
       theme: "light",
       lineHeight: 1.6,
     });
+    setTheme("light");
   };
 
   return (
@@ -144,7 +150,6 @@ export function ReaderSettings({
               <SelectContent>
                 <SelectItem value="light">🌞 Sáng</SelectItem>
                 <SelectItem value="dark">🌙 Tối</SelectItem>
-                <SelectItem value="sepia">📜 Sepia</SelectItem>
               </SelectContent>
             </Select>
           </div>

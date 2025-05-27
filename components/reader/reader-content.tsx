@@ -57,35 +57,8 @@ export function ReaderContent({
     }
   );
 
-  // Apply theme styles
-  const getThemeStyles = () => {
-    switch (settings.theme) {
-      case "dark":
-        return {
-          backgroundColor: "#1a1a1a",
-          color: "#e5e5e5",
-        };
-      case "sepia":
-        return {
-          backgroundColor: "#f4f1ea",
-          color: "#5c4b37",
-        };
-      default:
-        return {
-          backgroundColor: "#ffffff",
-          color: "#000000",
-        };
-    }
-  };
-
-  const themeStyles = getThemeStyles();
-
   return (
-    <div
-      className="flex-1 flex flex-col"
-      style={themeStyles}
-      ref={swipeRef as any}
-    >
+    <div className="flex-1 flex flex-col" ref={swipeRef as any}>
       {/* Chapter Header */}
       <div className="border-b p-3 sm:p-4 bg-background/95 backdrop-blur">
         <div className="flex items-center justify-between">
@@ -128,7 +101,7 @@ export function ReaderContent({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto" style={themeStyles}>
+      <div className="flex-1 overflow-auto">
         <div
           className={cn(
             "max-w-4xl mx-auto p-4 sm:p-6 lg:p-8",
@@ -137,7 +110,6 @@ export function ReaderContent({
           style={{
             fontSize: `${settings.fontSize}px`,
             lineHeight: settings.lineHeight,
-            color: themeStyles.color,
           }}
         >
           <div className="prose prose-sm sm:prose-lg max-w-none">
@@ -146,7 +118,6 @@ export function ReaderContent({
                 h1: ({ children }) => (
                   <h1
                     style={{
-                      color: themeStyles.color,
                       fontSize: `${settings.fontSize + 8}px`,
                       fontWeight: "bold",
                     }}
@@ -157,7 +128,6 @@ export function ReaderContent({
                 h2: ({ children }) => (
                   <h2
                     style={{
-                      color: themeStyles.color,
                       fontSize: `${settings.fontSize + 4}px`,
                       fontWeight: "bold",
                     }}
@@ -168,7 +138,6 @@ export function ReaderContent({
                 h3: ({ children }) => (
                   <h3
                     style={{
-                      color: themeStyles.color,
                       fontSize: `${settings.fontSize + 2}px`,
                       fontWeight: "bold",
                     }}
@@ -179,21 +148,14 @@ export function ReaderContent({
                 p: ({ children }) => (
                   <p
                     style={{
-                      color: themeStyles.color,
                       lineHeight: settings.lineHeight,
                     }}
                   >
                     {children}
                   </p>
                 ),
-                strong: ({ children }) => (
-                  <strong style={{ color: themeStyles.color }}>
-                    {children}
-                  </strong>
-                ),
-                em: ({ children }) => (
-                  <em style={{ color: themeStyles.color }}>{children}</em>
-                ),
+                strong: ({ children }) => <strong>{children}</strong>,
+                em: ({ children }) => <em>{children}</em>,
                 blockquote: ({ children }) => (
                   <blockquote
                     style={{
@@ -205,9 +167,7 @@ export function ReaderContent({
                     {children}
                   </blockquote>
                 ),
-                li: ({ children }) => (
-                  <li style={{ color: themeStyles.color }}>{children}</li>
-                ),
+                li: ({ children }) => <li>{children}</li>,
               }}
             >
               {currentChapter.content}
