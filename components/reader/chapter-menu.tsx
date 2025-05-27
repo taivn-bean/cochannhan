@@ -6,7 +6,6 @@ import { FixedSizeList as List, ListChildComponentProps } from "react-window";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -48,6 +47,11 @@ function ChapterMenu({ book, chapterList, currentChapter }: ChapterMenuProps) {
       chapter.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [chapterList, searchQuery]);
+
+  const currentIndex = useMemo(
+    () => filteredChapters.findIndex((c) => c.id === currentChapter.id),
+    [filteredChapters, currentChapter.id]
+  );
 
   const itemHeight = 44;
   const listHeight = 500;
@@ -122,6 +126,7 @@ function ChapterMenu({ book, chapterList, currentChapter }: ChapterMenuProps) {
 
             {filteredChapters.length > 0 ? (
               <List
+                initialScrollOffset={currentIndex * itemHeight}
                 height={listHeight}
                 itemCount={filteredChapters.length}
                 itemSize={itemHeight}
@@ -137,38 +142,6 @@ function ChapterMenu({ book, chapterList, currentChapter }: ChapterMenuProps) {
               </div>
             ) : null}
           </div>
-
-          {bookmarks.length > 0 && (
-            <div className="pt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Bookmark className="h-4 w-4" />
-                <span className="font-medium text-sm">Đã đánh dấu</span>
-              </div>
-              <div className="space-y-1 max-h-[200px] overflow-y-auto border rounded-md">
-                {bookmarks
-                  .map((id) => chapterList.find((c) => c.id === id))
-                  .filter(Boolean)
-                  .map((chapter) => (
-                    <Button
-                      key={chapter!.id}
-                      variant="ghost"
-                      onClick={() => handleChapterSelect(chapter!)}
-                      className={cn(
-                        "w-full justify-start h-auto p-3 text-left",
-                        currentChapter.id === chapter!.id &&
-                          "bg-accent text-accent-foreground"
-                      )}
-                    >
-                      <div className="flex flex-col items-start gap-1">
-                        <span className="line-clamp-2 text-sm font-medium">
-                          {chapter!.title}
-                        </span>
-                      </div>
-                    </Button>
-                  ))}
-              </div>
-            </div>
-          )}
         </div>
       </SheetContent>
     </Sheet>

@@ -22,8 +22,7 @@ export function Header() {
               className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
             >
               <Heart className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Ủng Hộ Tôi</span>
-              <span className="sm:hidden">Ủng Hộ</span>
+              <span className="sm:inline">Ủng Hộ Tôi</span>
             </Button>
           </Link>
           <ModeToggle />
