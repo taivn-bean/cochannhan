@@ -29,7 +29,7 @@ export default function ChapterPage() {
     prevChapter: null,
   });
 
-  const { book, chapterList, loading, fetchChapter } = useServices(bookSlug);
+  const { book, chapterList, fetchChapter } = useServices(bookSlug);
   const [localReaderSettings, setLocalReaderSettings] = useLocalStorage(
     LOCAL_STORAGE_KEY.READER_SETTINGS,
     {
@@ -68,14 +68,6 @@ export default function ChapterPage() {
   useEffect(() => {
     setLocalReaderSettings(readerSettings);
   }, [readerSettings]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <LoadingSpinner />
-      </div>
-    );
-  }
 
   if (!book) {
     return (

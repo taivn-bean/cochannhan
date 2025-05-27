@@ -6,7 +6,6 @@ import { Book, Chapter, ChapterListItem } from "@/types/type";
 
 export const useServices = (slug: string) => {
   const [book, setBook] = useState<Book | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
   const [chapterList, setChapterList] = useLocalStorage<ChapterListItem[]>(
     LOCAL_STORAGE_KEY.CHAPTERS(slug),
     []
@@ -20,20 +19,16 @@ export const useServices = (slug: string) => {
 
   const fetchChapterList = async (bookSlug: string) => {
     if (chapterList.length) {
-      setLoading(false);
       return chapterList;
     }
     const chapters = await findChapterList(bookSlug);
     setChapterList(chapters);
-    setLoading(false);
     return chapters;
   };
 
   const fetchChapterData = async (bookSlug: string, chapterSlug: string) => {
-    setLoading(true);
     const currentChapter = await findChapterBySlug(bookSlug, chapterSlug);
     if (!currentChapter) {
-      setLoading(false);
       return {
         currentChapter: null,
         prevChapter: null,
@@ -42,7 +37,6 @@ export const useServices = (slug: string) => {
     }
     const prevChapter = await fetchPrevChapter(currentChapter);
     const nextChapter = await fetchNextChapter(currentChapter);
-    setLoading(false);
     return {
       currentChapter: currentChapter,
       prevChapter,
@@ -80,7 +74,6 @@ export const useServices = (slug: string) => {
   return {
     book,
     chapterList: chapterList,
-    loading,
     fetchBook,
     fetchChapterList,
     fetchChapter: fetchChapterData,
