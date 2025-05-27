@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import ChapterMenu from "@/components/reader/chapter-menu";
+import ChapterMenuDrawer from "@/components/reader/chapter-menu-drawer";
 import { ReaderContent } from "@/components/reader/reader-content";
 import { ReaderSettings } from "@/components/reader/reader-settings";
 import { useLocalStorage } from "usehooks-ts";
@@ -11,7 +11,6 @@ import { useServices } from "@/hooks/use-services";
 import { Chapter } from "@/types/type";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { LoadingSpinner } from "@/components/ui/loading-sprinner";
 import { useRouter } from "next/navigation";
 
 export default function ChapterPage() {
@@ -19,6 +18,7 @@ export default function ChapterPage() {
   const router = useRouter();
   const bookSlug = params.bookSlug as string;
   const chapterSlug = params.chapterSlug as string;
+  const [showControl, setShowControl] = useState(false);
   const [chapterData, setChapterData] = useState<{
     currentChapter: Chapter | null;
     nextChapter: Chapter | null;
@@ -43,7 +43,6 @@ export default function ChapterPage() {
     LOCAL_STORAGE_KEY.CURRENT_CHAPTER(bookSlug),
     null
   );
-  const [readerSettings, setReaderSettings] = useState(localReaderSettings);
 
   useEffect(() => {
     const loadBook = async () => {
@@ -65,41 +64,49 @@ export default function ChapterPage() {
     }
   }, [bookSlug, chapterSlug]);
 
-  useEffect(() => {
-    setLocalReaderSettings(readerSettings);
-  }, [readerSettings]);
-
   return (
     <div
       className="min-h-screen bg-background"
-      data-theme={readerSettings.theme}
+      data-theme={localReaderSettings.theme}
       suppressHydrationWarning
     >
-      <div className="flex flex-col h-[calc(100vh-3.5rem)]">
-        <div className="flex items-center gap-4 p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <div
+        className="flex flex-col h-20"
+        style={
+          showControl
+            ? { position: "sticky", width: "100%", top: 0 }
+            : undefined
+        }
+      >
+        <div className="flex items-center gap-4 p-4 border-b bg-background/95 ">
           <Button onClick={() => router.replace(`/${bookSlug}`)}>
             <ArrowLeft />
             Back
           </Button>
           {book && chapterData.currentChapter && (
-            <ChapterMenu
+            <ChapterMenuDrawer
               chapterList={chapterList}
               book={book}
               currentChapter={chapterData.currentChapter}
             />
           )}
-          {readerSettings && (
+          {localReaderSettings && (
             <ReaderSettings
-              settings={readerSettings}
-              onSettingsChange={setReaderSettings}
+              settings={localReaderSettings}
+              onSettingsChange={setLocalReaderSettings}
             />
           )}
         </div>
+      </div>
+
+      <div>
         {chapterData.currentChapter && book && (
           <ReaderContent
+            showControl={showControl}
+            setShowControl={setShowControl}
             book={book}
             currentChapter={chapterData.currentChapter}
-            settings={readerSettings}
+            settings={localReaderSettings}
             chapterList={chapterList}
             nextChapter={chapterData.nextChapter}
             prevChapter={chapterData.prevChapter}

@@ -8,6 +8,7 @@ import { useSwipe } from "@/hooks/use-swipe";
 import { Book, Chapter, ChapterListItem, ReaderSettings } from "@/types/type";
 import { calculateProgress } from "@/lib/books";
 import { cn } from "@/lib/utils";
+import { Dispatch, SetStateAction } from "react";
 
 interface ReaderContentProps {
   book: Book;
@@ -16,6 +17,8 @@ interface ReaderContentProps {
   currentChapter: Chapter;
   nextChapter: Chapter | null;
   prevChapter: Chapter | null;
+  showControl: boolean;
+  setShowControl: Dispatch<SetStateAction<boolean>>;
 }
 
 export function ReaderContent({
@@ -25,6 +28,8 @@ export function ReaderContent({
   settings,
   nextChapter,
   prevChapter,
+  showControl,
+  setShowControl,
 }: ReaderContentProps) {
   const params = useParams();
   const router = useRouter();
@@ -60,35 +65,43 @@ export function ReaderContent({
   return (
     <div className="flex-1 flex flex-col" ref={swipeRef as any}>
       {/* Chapter Header */}
-      <div className="border-b p-3 sm:p-4 bg-background/95 backdrop-blur">
-        <div className="flex items-center justify-between">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-lg sm:text-xl font-semibold line-clamp-1">
-              {currentChapter.title}
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              {calculateProgress(currentChapter.order, chapterList.length)}%
-            </p>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2 ml-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrevious}
-              disabled={!canGoPrevious}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Trước</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNext}
-              disabled={!canGoNext}
-            >
-              <span className="hidden sm:inline mr-1">Tiếp</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+      <div
+        style={
+          showControl
+            ? { position: "sticky", width: "100%", top: 73 }
+            : undefined
+        }
+      >
+        <div className="border-b p-3 sm:p-4 bg-background/95">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-xl font-semibold line-clamp-1">
+                {currentChapter.title}
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {calculateProgress(currentChapter.order, chapterList.length)}%
+              </p>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2 ml-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevious}
+                disabled={!canGoPrevious}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline ml-1">Trước</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNext}
+                disabled={!canGoNext}
+              >
+                <span className="hidden sm:inline mr-1">Tiếp</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -112,7 +125,10 @@ export function ReaderContent({
             lineHeight: settings.lineHeight,
           }}
         >
-          <div className="prose prose-sm sm:prose-lg max-w-none">
+          <div
+            className="prose prose-sm sm:prose-lg max-w-none"
+            onClick={() => setShowControl((prev) => !prev)}
+          >
             <ReactMarkdown
               components={{
                 h1: ({ children }) => (
