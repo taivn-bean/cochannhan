@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/layout/header";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { fontMap } from "./fontMap";
-
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 export const metadata: Metadata = {
   title: "Cổ Chân Nhân",
@@ -47,6 +47,7 @@ export default function RootLayout({
           <ScrollToTop />
         </ThemeProvider>
       </body>
+      <GoogleAnalytics gaId="GTM-K7W9DBDX" />
     </html>
   );
 }
