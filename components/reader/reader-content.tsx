@@ -107,11 +107,11 @@ export function ReaderContent({
       </div>
 
       {/* Swipe Indicator */}
-      <div className="sm:hidden p-2 text-center">
+      {/* <div className="sm:hidden p-2 text-center">
         <p className="text-xs text-muted-foreground">
           💡 Vuốt trái/phải để chuyển chương
         </p>
-      </div>
+      </div> */}
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
