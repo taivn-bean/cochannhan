@@ -70,7 +70,7 @@ export default function RootLayout({
           <ScrollToTop />
         </ThemeProvider>
       </body>
-      <GoogleAnalytics gaId="GTM-K7W9DBDX" />
+      <GoogleAnalytics gaId="G-10WDPX8V4W" />
     </html>
   );
 }
