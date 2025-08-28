@@ -192,6 +192,21 @@ export function ReaderContent({
         </div>
       </div>
 
+      <div className="p-4 text-center text-sm text-muted-foreground">
+        Mình đang xây dựng kênh Youtube về truyện audio, các bạn ủng hộ view và
+        subscribe kênh để mình thêm động lực với nhé.
+        <br />
+        Chúc các bạn đọc truyện vui vẻ.
+        <br />
+        <a
+          href="https://www.youtube.com/@DauHuThienTon"
+          target="_blank"
+          className="text-blue-500"
+        >
+          https://www.youtube.com/@DauHuThienTon
+        </a>
+      </div>
+
       {/* Navigation Footer */}
       <div className="border-t p-3 sm:p-4 bg-background/95 backdrop-blur">
         <div className="flex items-center justify-between max-w-4xl mx-auto">

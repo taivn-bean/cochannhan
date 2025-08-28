@@ -11,6 +11,17 @@ export const mockBooks: Book[] = [
     chapters: 3802,
     coverImage: "/images/cover.jpg",
   },
+  
+  {
+    id: "2",
+    author: "Cổ Chân Nhân",
+    cover: "",
+    description: "",
+    slug: "nhan-to-truyen",
+    title: "Nhân Tổ Truyện",
+    chapters: 40,
+    coverImage: "/images/nhan-to-truyen.jpg",
+  },
 ];
 
 export const LOCAL_STORAGE_KEY = {
