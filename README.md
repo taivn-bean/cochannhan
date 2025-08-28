@@ -1,1 +1,1 @@
-Update GA
+Cập nhật Nhân Tổ Truyện
