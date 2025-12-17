@@ -9,7 +9,7 @@ export const mockBooks: Book[] = [
     slug: "co-chan-nhan",
     title: "Cổ Chân Nhân",
     chapters: 3802,
-    coverImage: "/images/cover.jpg",
+    coverImage: "/images/cover_image_u3.jpg",
   },
   
   {
