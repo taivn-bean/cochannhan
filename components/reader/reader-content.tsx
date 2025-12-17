@@ -1,22 +1,22 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { useSwipe } from "@/hooks/use-swipe";
-import { Book, Chapter, ChapterListItem, ReaderSettings } from "@/types/type";
-import { calculateProgress } from "@/lib/books";
+import type { Dispatch, SetStateAction } from "react";
+import type { Book, Chapter, ChapterListItem } from "@/types/type";
+import { Button } from "@/components/ui/button";
+
 import { cn } from "@/lib/utils";
-import { Dispatch, SetStateAction } from "react";
+import { useReaderSettingsStore } from "@/stores/readerSettingsStore";
+import { useRouter } from "next/navigation";
+import { calculateProgress } from "@/lib/books";
 
 interface ReaderContentProps {
   book: Book;
-  chapterList: ChapterListItem[];
-  settings: ReaderSettings;
+  chapterList: Array<ChapterListItem>;
   currentChapter: Chapter;
-  nextChapter: Chapter | null;
-  prevChapter: Chapter | null;
+  prevMeta?: ChapterListItem;
+  nextMeta?: ChapterListItem;
   showControl: boolean;
   setShowControl: Dispatch<SetStateAction<boolean>>;
 }
@@ -25,45 +25,31 @@ export function ReaderContent({
   book,
   currentChapter,
   chapterList,
-  settings,
-  nextChapter,
-  prevChapter,
+  nextMeta,
+  prevMeta,
   showControl,
   setShowControl,
 }: ReaderContentProps) {
-  const params = useParams();
   const router = useRouter();
-  const bookSlug = params.bookSlug as string;
+  const { settings } = useReaderSettingsStore();
 
-  const canGoPrevious = prevChapter !== null;
-  const canGoNext = nextChapter !== null;
+  const canGoPrevious = prevMeta !== undefined;
+  const canGoNext = nextMeta !== undefined;
 
   const handlePrevious = () => {
     if (canGoPrevious) {
-      router.push(`/${bookSlug}/${prevChapter.slug}`);
+      router.push(`/${book.slug}/${prevMeta.slug}`);
     }
   };
 
   const handleNext = () => {
     if (canGoNext) {
-      router.push(`/${bookSlug}/${nextChapter.slug}`);
+      router.push(`/${book.slug}/${nextMeta.slug}`);
     }
   };
 
-  // Swipe handlers
-  const swipeRef = useSwipe(
-    {
-      onSwipeLeft: handleNext,
-      onSwipeRight: handlePrevious,
-    },
-    {
-      threshold: 100,
-      preventDefaultTouchmoveEvent: false,
-    }
-  );
-
   return (
-    <div className="flex-1 flex flex-col" ref={swipeRef as any}>
+    <div className="flex-1 flex flex-col">
       {/* Chapter Header */}
       <div
         style={
@@ -203,7 +189,7 @@ export function ReaderContent({
           >
             <ChevronLeft className="h-4 w-4 shrink-0" />
             <span className="truncate">
-              {canGoPrevious ? prevChapter?.title : "Không có chương trước"}
+              {canGoPrevious ? prevMeta.title : "Không có chương trước"}
             </span>
           </Button>
 
@@ -218,7 +204,7 @@ export function ReaderContent({
             className="flex items-center gap-2 text-xs sm:text-sm max-w-[40%]"
           >
             <span className="truncate">
-              {canGoNext ? nextChapter?.title : "Không có chương tiếp"}
+              {canGoNext ? nextMeta.title : "Không có chương tiếp"}
             </span>
             <ChevronRight className="h-4 w-4 shrink-0" />
           </Button>

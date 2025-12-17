@@ -3,32 +3,23 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
-import { LOCAL_STORAGE_KEY } from "@/constants/common";
-import { useLocalStorage } from "usehooks-ts";
-import { ReaderSettings } from "@/types/type";
+import { useReaderSettingsStore } from "@/stores/readerSettingsStore";
 
 export function ModeToggle() {
-  const { setTheme, theme } = useTheme();
-  const [readerSettings, setReaderSettings] = useLocalStorage<ReaderSettings>(
-    LOCAL_STORAGE_KEY.READER_SETTINGS,
-    {
-      fontSize: 16,
-      fontFamily: "Inter",
-      theme: "light",
-      lineHeight: 1.6,
-    }
-  );
+  const { settings, updateSettings } = useReaderSettingsStore();
+  const { theme, setTheme } = useTheme();
 
   return (
     <Button
       variant="ghost"
       size="sm"
       onClick={() => {
-        setTheme(theme === "light" ? "dark" : "light");
-        setReaderSettings({
-          ...readerSettings,
-          theme: theme === "light" ? "dark" : "light",
+        const newTheme = theme === "light" ? "dark" : "light";
+        updateSettings({
+          ...settings,
+          theme: newTheme,
         });
+        setTheme(newTheme);
       }}
     >
       <Sun className="h-[1.1rem] w-[1.1rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Palette, RotateCcw, Settings, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -15,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Settings, Type, Palette, RotateCcw } from "lucide-react";
+import { useReaderSettingsStore } from "@/stores/readerSettingsStore";
 import { fontMap } from "@/app/fontMap";
 import { useTheme } from "next-themes";
 
@@ -26,20 +27,13 @@ interface ReaderSettings {
   lineHeight: number;
 }
 
-interface ReaderSettingsProps {
-  settings: ReaderSettings;
-  onSettingsChange: (settings: ReaderSettings) => void;
-}
-
-export function ReaderSettings({
-  settings,
-  onSettingsChange,
-}: ReaderSettingsProps) {
+export function ReaderSettings() {
+  const { settings, updateSettings } = useReaderSettingsStore();
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
 
   const updateSetting = (key: keyof ReaderSettings, value: any) => {
-    onSettingsChange({
+    updateSettings({
       ...settings,
       [key]: value,
     });
@@ -49,7 +43,7 @@ export function ReaderSettings({
   };
 
   const resetSettings = () => {
-    onSettingsChange({
+    updateSettings({
       fontSize: 16,
       fontFamily: fontMap.Inter.className,
       theme: "light",

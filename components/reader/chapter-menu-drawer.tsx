@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, memo } from "react";
+import { memo, useState } from "react";
 import { BookOpen } from "lucide-react";
 
+import ChapterMenu from "../book/chapter-menu";
+import type { Book, Chapter, ChapterListItem } from "@/types/type";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -11,19 +13,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Chapter, Book, ChapterListItem } from "@/types/type";
-import ChapterMenu from "../book/chapter-menu";
 
 interface ChapterMenuProps {
   book: Book;
-  chapterList: ChapterListItem[];
+  chapterList: Array<ChapterListItem>;
   currentChapter: Chapter;
+  isLoading?: boolean;
 }
 
 function ChapterMenuDrawer({
   book,
   chapterList,
   currentChapter,
+  isLoading,
 }: ChapterMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -36,7 +38,11 @@ function ChapterMenuDrawer({
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="left" className="w-full sm:w-[540px]">
+      <SheetContent
+        side="bottom"
+        className="p-4 w-full max-h-[85dvh]"
+        aria-describedby={undefined}
+      >
         <SheetHeader>
           <SheetTitle>{book.title}</SheetTitle>
         </SheetHeader>
@@ -45,6 +51,7 @@ function ChapterMenuDrawer({
           book={book}
           chapterList={chapterList}
           currentChapter={currentChapter}
+          isLoading={isLoading}
         />
       </SheetContent>
     </Sheet>

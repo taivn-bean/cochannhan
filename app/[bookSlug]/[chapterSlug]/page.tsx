@@ -1,88 +1,69 @@
 "use client";
-
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useLocalStorage } from "usehooks-ts";
 import ChapterMenuDrawer from "@/components/reader/chapter-menu-drawer";
 import { ReaderContent } from "@/components/reader/reader-content";
 import { ReaderSettings } from "@/components/reader/reader-settings";
-import { useLocalStorage } from "usehooks-ts";
-import { LOCAL_STORAGE_KEY } from "@/constants/common";
-import { useServices } from "@/hooks/use-services";
-import { Chapter, LastReader } from "@/types/type";
+// import { ChapterErrorFallback } from "@/components/reader/chapter-error-fallback";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-sprinner";
+import {
+  useFetchBookBySlug,
+  useFetchChapterData,
+  useFetchChapterList,
+} from "@/hooks/queries/books";
+import { recentAccessActions } from "@/stores/recentAccessStore";
+import { useReaderSettingsStore } from "@/stores/readerSettingsStore";
+import { useParams, useRouter } from "next/navigation";
 
 export default function ChapterPage() {
   const params = useParams();
   const router = useRouter();
   const bookSlug = params.bookSlug as string;
   const chapterSlug = params.chapterSlug as string;
+
   const [showControl, setShowControl] = useState(false);
-  const [chapterData, setChapterData] = useState<{
-    currentChapter: Chapter | null;
-    nextChapter: Chapter | null;
-    prevChapter: Chapter | null;
-  }>({
-    currentChapter: null,
-    nextChapter: null,
-    prevChapter: null,
-  });
 
-  const { book, chapterList, fetchChapter } = useServices(bookSlug);
-  const [localReaderSettings, setLocalReaderSettings] = useLocalStorage(
-    LOCAL_STORAGE_KEY.READER_SETTINGS,
-    {
-      fontSize: 16,
-      fontFamily: "Inter",
-      theme: "light",
-      lineHeight: 1.6,
-    }
-  );
-  const [, setCurrentChapter] = useLocalStorage<Chapter | null>(
-    LOCAL_STORAGE_KEY.CURRENT_CHAPTER(bookSlug),
-    null
-  );
-  const [lastReader, setLastReader] = useLocalStorage<LastReader | null>(
-    LOCAL_STORAGE_KEY.LAST_READER,
-    null
-  );
+  const { data: book } = useFetchBookBySlug(bookSlug);
+  const { data: chapterList, isLoading: isLoadingChapterList } =
+    useFetchChapterList(bookSlug);
+  const {
+    data: chapterData,
+    isLoading,
+    error,
+  } = useFetchChapterData(bookSlug, chapterSlug);
 
+  const { settings } = useReaderSettingsStore();
+
+  // ✅ Add to recent access when chapter loads
   useEffect(() => {
-    const loadBook = async () => {
-      try {
-        const chapterData = await fetchChapter(bookSlug, chapterSlug);
-
-        // Save current chapter to localStorage
-        if (chapterData) {
-          setChapterData(chapterData);
-          setCurrentChapter(chapterData.currentChapter);
-        }
-      } catch (error) {
-        console.error("Error loading book:", error);
-      }
-    };
-
-    if (bookSlug) {
-      loadBook();
-    }
-  }, [bookSlug, chapterSlug]);
-
-  useEffect(() => {
-    if (chapterData.currentChapter) {
-      setLastReader({
+    if (chapterData?.currentChapter) {
+      recentAccessActions.addRecentAccess({
         title: chapterData.currentChapter.title,
         bookSlug,
         chapterSlug,
-        scrollPosition: 0,
-        isNavigated: false,
       });
     }
-  }, [chapterData.currentChapter]);
+  }, [chapterData?.currentChapter, bookSlug, chapterSlug]);
+
+  // Show error fallback if chapter fails to load
+  // if (error && book) {
+  //   return (
+  //     <ChapterErrorFallback
+  //       bookSlug={bookSlug}
+  //       bookTitle={book.title}
+  //       chapterSlug={chapterSlug}
+  //       chapterTitle={chapterData?.currentChapter?.title || chapterSlug}
+  //       error={error}
+  //     />
+  //   );
+  // }
 
   return (
     <div
       className="min-h-screen bg-background"
-      data-theme={localReaderSettings.theme}
+      data-theme={settings.theme}
       suppressHydrationWarning
     >
       <div
@@ -98,34 +79,36 @@ export default function ChapterPage() {
             <ArrowLeft />
             Back
           </Button>
-          {book && chapterData.currentChapter && (
+          {book && chapterList && chapterData?.currentChapter && (
             <ChapterMenuDrawer
               chapterList={chapterList}
               book={book}
               currentChapter={chapterData.currentChapter}
+              isLoading={isLoadingChapterList}
             />
           )}
-          {localReaderSettings && (
-            <ReaderSettings
-              settings={localReaderSettings}
-              onSettingsChange={setLocalReaderSettings}
-            />
-          )}
+          <ReaderSettings />
         </div>
       </div>
 
+      {isLoading && <LoadingSpinner />}
       <div>
-        {chapterData.currentChapter && book && (
-          <ReaderContent
-            showControl={showControl}
-            setShowControl={setShowControl}
-            book={book}
-            currentChapter={chapterData.currentChapter}
-            settings={localReaderSettings}
-            chapterList={chapterList}
-            nextChapter={chapterData.nextChapter}
-            prevChapter={chapterData.prevChapter}
-          />
+        {!isLoading && chapterData?.currentChapter && book && (
+          <div className="pb-20">
+            <ReaderContent
+              showControl={showControl}
+              setShowControl={setShowControl}
+              book={book}
+              currentChapter={chapterData.currentChapter}
+              chapterList={chapterList || []}
+              nextMeta={chapterData.nextMeta}
+              prevMeta={chapterData.prevMeta}
+            />
+            {/* 
+            <div className="container mx-auto px-4 mt-8 pt-8 border-t">
+              <CommentSection bookSlug={bookSlug} chapterSlug={chapterSlug} />
+            </div> */}
+          </div>
         )}
       </div>
     </div>

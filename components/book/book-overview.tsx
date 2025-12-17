@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { BookOpen, FileText, Play, RotateCcw, User } from "lucide-react";
+import { Progress } from "../ui/progress";
+import { Button } from "../ui/button";
+import ChapterMenu from "./chapter-menu";
+import type { Book, ChapterListItem } from "@/types/type";
 import {
   Card,
   CardContent,
@@ -8,57 +12,58 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  BookOpen,
-  Play,
-  RotateCcw,
-  Clock,
-  User,
-  FileText,
-  Bookmark,
-  Download,
-  Wifi,
-  WifiOff,
-} from "lucide-react";
-import { Book, Chapter, ChapterListItem } from "@/types/type";
-import { useRouter } from "next/navigation";
-import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
-import { LOCAL_STORAGE_KEY } from "@/constants/common";
-import { Progress } from "../ui/progress";
-import { Button } from "../ui/button";
-import { ScrollArea } from "../ui/scroll-area";
-import { Badge } from "../ui/badge";
+import { useRecentAccessStore } from "@/stores/recentAccessStore";
 import { calculateProgress } from "@/lib/books";
-import ChapterMenu from "./chapter-menu";
+import { useRouter } from "next/navigation";
 
 interface BookOverviewProps {
   book: Book;
-  chapters: ChapterListItem[];
+  chapters: Array<ChapterListItem>;
+  isLoading?: boolean;
 }
 
-export function BookOverview({ book, chapters }: BookOverviewProps) {
+export function BookOverview({
+  book,
+  chapters = [],
+  isLoading,
+}: BookOverviewProps) {
   const router = useRouter();
-  const currentChapter = useReadLocalStorage<Chapter | null>(
-    LOCAL_STORAGE_KEY.CURRENT_CHAPTER(book.slug)
-  );
-  const bookmarks = useReadLocalStorage<string[]>(
-    LOCAL_STORAGE_KEY.BOOKMARKS(book.slug)
+  const { items: recentItems } = useRecentAccessStore();
+
+  const currentChapter = chapters.find((chapter) => {
+    const recentItem = recentItems.find(
+      (item) => item.chapterSlug === chapter.slug
+    );
+    return recentItem;
+  });
+
+  const lastReadChapter = recentItems.find(
+    (item) => item.bookSlug === book.slug
   );
 
   const handleContinueReading = () => {
-    const chapter =
-      chapters.find((ch) => ch.id === currentChapter?.id) || chapters[0];
-    router.push(`/${book.slug}/${chapter.slug}`);
+    if (lastReadChapter) {
+      router.push(`/${book.slug}/${lastReadChapter.chapterSlug}`);
+    } else if (chapters.length > 0) {
+      router.push(`/${book.slug}/${chapters[0].slug}`);
+    }
   };
 
   const handleStartFromBeginning = () => {
-    const firstChapter = chapters[0];
-    router.push(`/${book.slug}/${firstChapter.slug}`);
+    if (chapters.length > 0) {
+      router.push(`/${book.slug}/${chapters[0].slug}`);
+    }
   };
 
-  const handleChapterSelect = (chapter: ChapterListItem) => {
-    router.push(`/${book.slug}/${chapter.slug}`);
-  };
+  /*
+  Check só lượng chapter
+  */
+  // useEffect(() => {
+  //   (async () => {
+  //     const chapters = await firebaseService.fetchAllFilesInFolder(`/${book.slug}/chapters`)
+  //     console.log(chapters)
+  //   })()
+  // }, [])
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-8">
@@ -68,29 +73,30 @@ export function BookOverview({ book, chapters }: BookOverviewProps) {
           <div className="lg:col-span-1">
             <Card>
               <CardHeader className="text-center">
-                <div className="aspect-[3/4] w-full max-w-64 mx-auto mb-4">
+                <div className="aspect-[2/3] w-full max-w-64 mx-auto mb-4">
                   <img
-                    src={book.coverImage || "/placeholder.svg"}
-                    alt={book.title}
+                    loading="lazy"
+                    src={book?.coverImage || "/placeholder.svg"}
+                    alt={book?.title || ""}
                     className="w-full h-full object-cover rounded-lg shadow-lg"
                   />
                 </div>
                 <CardTitle className="text-xl sm:text-2xl">
-                  {book.title}
+                  {book?.title || ""}
                 </CardTitle>
                 <CardDescription className="flex items-center justify-center gap-2">
                   <User className="h-4 w-4" />
-                  {book.author}
+                  {book?.author || ""}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 p-4">
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  {book.description}
+                  {book?.description || ""}
                 </p>
 
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div className="text-2xl font-bold">
-                    {chapters.length}{" "}
+                    {chapters.length || 0}{" "}
                     <span className="text-xs text-muted-foreground">
                       Chương
                     </span>
@@ -117,7 +123,7 @@ export function BookOverview({ book, chapters }: BookOverviewProps) {
                       className="h-2"
                     />
                     <div className="text-xs text-muted-foreground">
-                      {currentChapter?.order} / {chapters.length}
+                      {currentChapter.order} / {chapters.length}
                     </div>
                   </div>
                 )}
@@ -173,7 +179,12 @@ export function BookOverview({ book, chapters }: BookOverviewProps) {
                 <CardDescription>Chọn chương để bắt đầu đọc</CardDescription>
               </CardHeader>
               <CardContent className="p-0 sm:p-2">
-                <ChapterMenu book={book} chapterList={chapters} currentChapter={currentChapter} />
+                <ChapterMenu
+                  book={book}
+                  chapterList={chapters}
+                  currentChapter={currentChapter}
+                  isLoading={isLoading}
+                />
               </CardContent>
             </Card>
           </div>

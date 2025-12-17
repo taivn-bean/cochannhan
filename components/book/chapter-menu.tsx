@@ -1,48 +1,51 @@
 "use client";
 
-import { useState, useMemo, memo } from "react";
-import { Bookmark, BookmarkCheck, BookOpen, Search } from "lucide-react";
-import { FixedSizeList as List, ListChildComponentProps } from "react-window";
+import { memo, useMemo, useState } from "react";
+import { BookOpen, Bookmark, BookmarkCheck, Search } from "lucide-react";
+import { FixedSizeList as List } from "react-window";
+import { Checkbox } from "../ui/checkbox";
+import { LoadingSpinner } from "../ui/loading-sprinner";
+import type { ListChildComponentProps } from "react-window";
 
+import type { Book, Chapter, ChapterListItem } from "@/types/type";
+import type { CheckedState } from "@radix-ui/react-checkbox";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useBookmarkStore } from "@/stores/bookmarkStore";
 import { useRouter } from "next/navigation";
-import { Book, Chapter, ChapterListItem } from "@/types/type";
-import { LOCAL_STORAGE_KEY } from "@/constants/common";
-import { useLocalStorage } from "usehooks-ts";
 
 interface ChapterMenuProps {
   book: Book;
-  chapterList: ChapterListItem[];
-  currentChapter: Chapter | null;
+  chapterList: Array<ChapterListItem>;
+  currentChapter?: ChapterListItem | null;
+  isLoading?: boolean;
 }
 
-function ChapterMenu({ book, chapterList, currentChapter }: ChapterMenuProps) {
+function ChapterMenu({
+  book,
+  chapterList,
+  currentChapter,
+  isLoading,
+}: ChapterMenuProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [bookmarks, setBookmarks] = useLocalStorage<string[]>(
-    LOCAL_STORAGE_KEY.BOOKMARKS(book.slug),
-    []
-  );
-
-  const toggleBookmark = (chapterId: string) => {
-    setBookmarks((prev) =>
-      prev.includes(chapterId)
-        ? prev.filter((id) => id !== chapterId)
-        : [...prev, chapterId]
-    );
-  };
+  const [showBookmarks, setShowBookmarks] = useState<CheckedState>(false);
+  const { bookmarks = [], toggleBookmark } = useBookmarkStore(book?.slug || "");
 
   const handleChapterSelect = (chapter: ChapterListItem) => {
-    router.push(`/${book.slug}/${chapter.slug}`);
+    router.push(`/${book?.slug}/${chapter.slug}`);
   };
 
   const filteredChapters = useMemo(() => {
-    return chapterList.filter((chapter) =>
-      chapter.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [chapterList, searchQuery]);
+    return chapterList
+      .filter((chapter) =>
+        chapter.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .filter((chapter) =>
+        showBookmarks ? bookmarks.includes(chapter.slug) : true
+      );
+  }, [chapterList, searchQuery, showBookmarks, bookmarks]);
 
   const currentIndex = useMemo(
     () => filteredChapters.findIndex((c) => c.id === currentChapter?.id),
@@ -56,14 +59,14 @@ function ChapterMenu({ book, chapterList, currentChapter }: ChapterMenuProps) {
     const chapter = filteredChapters[index];
 
     return (
-      <div style={style} key={chapter.id} className="flex items-center gap-2">
+      <div style={style} key={chapter.id} className="flex items-center">
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => toggleBookmark(chapter.id)}
+          onClick={() => toggleBookmark(chapter.slug)}
           className="p-2 h-8 w-8 shrink-0"
         >
-          {bookmarks.includes(chapter.id) ? (
+          {bookmarks.includes(chapter.slug) ? (
             <BookmarkCheck className="h-4 w-4 text-yellow-500" />
           ) : (
             <Bookmark className="h-4 w-4" />
@@ -79,8 +82,8 @@ function ChapterMenu({ book, chapterList, currentChapter }: ChapterMenuProps) {
               "bg-accent text-accent-foreground"
           )}
         >
-          <div className="flex flex-col items-start gap-1">
-            <span className="line-clamp-2 text-sm font-medium">
+          <div className="flex flex-col items-start gap-1 min-w-0 overflow-hidden">
+            <span className="line-clamp-1 text-sm font-medium text-wrap">
               {chapter.title}
             </span>
           </div>
@@ -98,16 +101,29 @@ function ChapterMenu({ book, chapterList, currentChapter }: ChapterMenuProps) {
       />
 
       <div className="space-y-1">
-        <div className="flex items-center gap-2 mb-3">
-          <BookOpen className="h-4 w-4" />
-          <span className="font-medium text-sm">
-            {searchQuery
-              ? `Kết quả tìm kiếm (${filteredChapters.length})`
-              : "Danh sách chương"}
-          </span>
+        <div className="flex items-baseline justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            <span className="font-medium text-sm">
+              {searchQuery
+                ? `Kết quả tìm kiếm (${filteredChapters.length})`
+                : "Danh sách chương"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              name="showBookmarks"
+              onCheckedChange={(e: CheckedState) => {
+                setShowBookmarks(e);
+              }}
+            ></Checkbox>
+            <label htmlFor="showBookmarks">Đã đánh dấu</label>
+          </div>
         </div>
 
-        {filteredChapters.length > 0 ? (
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : filteredChapters.length > 0 ? (
           <List
             initialScrollOffset={currentIndex * itemHeight}
             height={listHeight}
