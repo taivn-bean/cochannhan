@@ -7,7 +7,7 @@ import type { Book, Chapter, ChapterListItem } from "@/types/type";
 import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
-import { useReaderSettingsStore } from "@/stores/readerSettingsStore";
+import { useReaderSettingsStore } from "@/stores/reader-settings.store";
 import { useRouter } from "next/navigation";
 import { calculateProgress } from "@/lib/books";
 

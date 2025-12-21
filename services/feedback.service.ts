@@ -1,102 +1,27 @@
-// import {
-//   addDoc,
-//   collection,
-//   doc,
-//   getDocs,
-//   orderBy,
-//   query,
-//   serverTimestamp,
-//   updateDoc,
-// } from "firebase/firestore";
-// import type { ChapterFeedback, GeneralFeedback } from "@/types/feedback";
-// import { db } from "@/lib/firebase";
+import { FeedbackStatus, type Feedback } from "@/types/feedback";
+import { supabase } from "@/lib/supabase";
 
-// class FeedbackService {
-//   COLLECTION = "feedbacks";
+const SCHEMA_NAME = "feedbacks";
+class FeedbackService {
+  getFeedbacks = () => {
+    return supabase.from(SCHEMA_NAME).select("*");
+  };
 
-//   // Submit chapter error report
-//   reportChapterError = async (
-//     data: Omit<ChapterFeedback, "id" | "createdAt">,
-//   ) => {
-//     const feedbackRef = collection(db, this.COLLECTION);
+  getReviewStats = () => {
+    return supabase.from(SCHEMA_NAME).select("*").eq("status", "pending");
+  };
 
-//     const docRef = await addDoc(feedbackRef, {
-//       ...data,
-//       type: "chapter_error",
-//       createdAt: serverTimestamp(),
-//     });
+  updateFeedbackStatus = async (id: string, status: FeedbackStatus) => {
+    return await supabase.from(SCHEMA_NAME).update({ status }).eq("id", id);
+  };
 
-//     return docRef.id;
-//   };
+  reportChapterError = (feedback: Feedback) => {
+    return supabase.from(SCHEMA_NAME).insert(feedback);
+  };
 
-//   // Submit general feedback
-//   submitGeneralFeedback = async (
-//     data: Omit<GeneralFeedback, "id" | "createdAt" | "updatedAt">,
-//   ) => {
-//     const feedbackRef = collection(db, this.COLLECTION);
+  submitFeedback = async (data: Omit<Feedback, "id" | "createdAt">) => {
+    return await supabase.from(SCHEMA_NAME).insert(data);
+  };
+}
 
-//     const docRef = await addDoc(feedbackRef, {
-//       ...data,
-//       type: "general",
-//       createdAt: serverTimestamp(),
-//       updatedAt: serverTimestamp(),
-//     });
-
-//     return docRef.id;
-//   };
-
-//   // Get all feedbacks
-//   getFeedbacks = async () => {
-//     const feedbackRef = collection(db, this.COLLECTION);
-//     const q = query(feedbackRef, orderBy("createdAt", "desc"));
-//     const querySnapshot = await getDocs(q);
-
-//     return querySnapshot.docs.map((feedbackDoc) => ({
-//       id: feedbackDoc.id,
-//       ...feedbackDoc.data(),
-//     })) as Array<ChapterFeedback | GeneralFeedback>;
-//   };
-
-//   // Update feedback status
-//   updateFeedbackStatus = async (
-//     id: string,
-//     status: ChapterFeedback["status"] | GeneralFeedback["status"],
-//   ) => {
-//     try {
-//       const docRef = doc(db, this.COLLECTION, id);
-
-//       await updateDoc(docRef, {
-//         status,
-//         updatedAt: serverTimestamp(), // Update timestamp when status changes
-//       });
-//     } catch (error) {
-//       console.error("Error updating feedback status:", error);
-//     }
-//   };
-
-//   // Get feedback stats
-//   getFeedbackStats = async () => {
-//     const feedbackRef = collection(db, this.COLLECTION);
-//     const querySnapshot = await getDocs(feedbackRef);
-//     const feedbacks = querySnapshot.docs.map(
-//       (feedbackDoc) => feedbackDoc.data() as ChapterFeedback | GeneralFeedback,
-//     );
-//     const stats = {
-//       total: feedbacks.length,
-//       pending: feedbacks.filter((f) => f.status === "pending").length,
-//       resolved: feedbacks.filter(
-//         (f) => f.status === "resolved" || f.status === "completed",
-//       ).length,
-//       ignored: feedbacks.filter(
-//         (f) => f.status === "ignored" || f.status === "rejected",
-//       ).length,
-//       inProgress: feedbacks.filter((f) => f.status === "in-progress").length,
-//       completed: feedbacks.filter((f) => f.status === "completed").length,
-//       rejected: feedbacks.filter((f) => f.status === "rejected").length,
-//     };
-
-//     return stats;
-//   };
-// }
-
-// export const feedbackService = new FeedbackService();
+export const feedbackService = new FeedbackService();

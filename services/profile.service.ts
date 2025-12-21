@@ -1,60 +1,42 @@
-// import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-// import type { UserProfile } from "@/types/profile";
-// import { db } from "@/lib/firebase";
+import type { UserProfile } from "@/types/profile";
+import { supabase } from "@/lib/supabase";
 
-// export class ProfileService {
-//   PROFILE_COLLECTION = "profiles";
+const PROFILE_SCHEMA = "profiles";
+export class ProfileService {
+  getProfileInfo = async (uid: string): Promise<UserProfile | null> => {
+    const { data, error } = await supabase
+      .from(PROFILE_SCHEMA)
+      .select("*")
+      .eq("user_id", uid)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  };
 
-//   getProfile = async (uid: string): Promise<UserProfile | null> => {
-//     const docRef = doc(db, this.PROFILE_COLLECTION, uid);
-//     const docSnap = await getDoc(docRef);
+  createProfileInfo = async (
+    uid: string,
+    data: Partial<UserProfile>
+  ): Promise<UserProfile> => {
+    const profileData = {
+      user_id: uid,
+      ...data,
+    };
+    const { data: insertedData, error } = await supabase
+      .from(PROFILE_SCHEMA)
+      .upsert(profileData)
+      .select()
+      .single();
+    if (error) throw error;
+    return insertedData;
+  };
 
-//     if (docSnap.exists()) {
-//       return docSnap.data() as UserProfile;
-//     }
+  updateProfileInfo = async (uid: string, data: Partial<UserProfile>) => {
+    const { error } = await supabase
+      .from(PROFILE_SCHEMA)
+      .upsert(data)
+      .eq("user_id", uid);
+    if (error) throw error;
+  };
+}
 
-//     return null;
-//   };
-
-//   createProfile = async (
-//     uid: string,
-//     data: Partial<UserProfile>,
-//   ): Promise<UserProfile> => {
-//     const profileData: UserProfile = {
-//       uid,
-//       displayName: data.displayName || "",
-//       email: data.email || "",
-//       photoURL: data.photoURL || "",
-//       bio: data.bio || "",
-//       location: data.location || "",
-//       website: data.website || "",
-//       role: "USER",
-//       createdAt: new Date().toISOString(),
-//       updatedAt: new Date().toISOString(),
-//     };
-
-//     await setDoc(doc(db, this.PROFILE_COLLECTION, uid), profileData);
-//     return profileData;
-//   };
-
-//   updateProfile = async (
-//     uid: string,
-//     data: Partial<UserProfile>,
-//   ): Promise<UserProfile> => {
-//     const docRef = doc(db, this.PROFILE_COLLECTION, uid);
-
-//     const updateData = {
-//       ...data,
-//       updatedAt: new Date().toISOString(),
-//     };
-
-//     await updateDoc(docRef, updateData);
-
-//     const updated = await this.getProfile(uid);
-//     if (!updated) throw new Error("Profile not found after update");
-
-//     return updated;
-//   };
-// }
-
-// export const profileService = new ProfileService();
+export const profileService = new ProfileService();

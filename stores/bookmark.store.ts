@@ -99,34 +99,15 @@ const bookmarkActions = {
   },
 };
 
-export const useBookmarkStore = (bookSlug: string) => {
-  // ✅ Subscribe to entire bookmarks object
-  const allBookmarks = useStore(bookmarkStore, (state) => state.bookmarks);
-
-  // ✅ Compute bookmarks for specific book
-  const bookmarks = useMemo(
-    () => allBookmarks[bookSlug],
-    [allBookmarks, bookSlug],
-  );
-
-  // ✅ Memoize actions
-  const actions = useMemo(
-    () => ({
-      addBookmark: (chapterSlug: string) =>
-        bookmarkActions.addBookmark(bookSlug, chapterSlug),
-      removeBookmark: (chapterSlug: string) =>
-        bookmarkActions.removeBookmark(bookSlug, chapterSlug),
-      toggleBookmark: (chapterSlug: string) =>
-        bookmarkActions.toggleBookmark(bookSlug, chapterSlug),
-      clearBookmarks: () => bookmarkActions.clearBookmarks(bookSlug),
-      isBookmarked: (chapterSlug: string) =>
-        bookmarkActions.isBookmarked(bookSlug, chapterSlug),
-    }),
-    [bookSlug],
-  );
+export const useBookmarkStore = () => {
+  const bookmarks = useStore(bookmarkStore, (s) => s.bookmarks);
 
   return {
     bookmarks,
-    ...actions,
+    addBookmark: bookmarkActions.addBookmark,
+    removeBookmark: bookmarkActions.removeBookmark,
+    toggleBookmark: bookmarkActions.toggleBookmark,
+    clearBookmarks: bookmarkActions.clearBookmarks,
+    isBookmarked: bookmarkActions.isBookmarked,
   };
 };

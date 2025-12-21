@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useReaderSettingsStore } from "@/stores/readerSettingsStore";
+import { useReaderSettingsStore } from "@/stores/reader-settings.store";
 import { fontMap } from "@/app/fontMap";
 import { useTheme } from "next-themes";
 

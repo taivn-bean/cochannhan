@@ -4,7 +4,7 @@ import { ArrowRight, BookOpen, Clock } from "lucide-react";
 import { useFetchAllBooks } from "@/hooks/queries/books";
 import { BookGrid } from "@/components/book/book-grid";
 import { Button } from "@/components/ui/button";
-import { useRecentAccessStore } from "@/stores/recentAccessStore";
+import { useRecentAccessStore } from "@/stores/recent-access.store";
 import { useRouter } from "next/navigation";
 
 export default function HomePage() {

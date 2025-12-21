@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRecentAccessStore } from "@/stores/recentAccessStore";
+import { useRecentAccessStore } from "@/stores/recent-access.store";
 import { calculateProgress } from "@/lib/books";
 import { useRouter } from "next/navigation";
 

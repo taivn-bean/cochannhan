@@ -6,7 +6,9 @@ import { Header } from "@/components/layout/header";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { fontMap } from "./fontMap";
 import { GoogleAnalytics } from "@next/third-parties/google";
-import { AppProvider } from "@/components/providers/app-provider";
+import { QueryProvider } from "@/components/providers/query.provider";
+import { AuthProvider } from "@/components/providers/auth.provider";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Cổ Chân Nhân",
@@ -63,11 +65,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppProvider>
-            <Header />
-            {children}
-            <ScrollToTop />
-          </AppProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <Header />
+              {children}
+              <ScrollToTop />
+              <Toaster />
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
       <GoogleAnalytics gaId="G-10WDPX8V4W" />

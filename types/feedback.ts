@@ -1,41 +1,37 @@
-export type FeedbackStatus =
-  | "pending"
-  | "resolved"
-  | "ignored"
-  | "in-progress"
-  | "completed"
-  | "rejected";
+export enum FeedbackStatus {
+  Pending = "pending",
+  Resolved = "resolved",
+  Ignored = "ignored",
+  InProgress = "in-progress",
+  Completed = "completed",
+  Rejected = "rejected",
+}
 
-export type FeedbackCategory =
-  | "feature"
-  | "improvement"
-  | "bug"
-  | "suggestion"
-  | "other";
+export enum FeedbackCategory {
+  Feature = "feature",
+  Improvement = "improvement",
+  Bug = "bug",
+  Suggestion = "suggestion",
+  Error = "error",
+  Other = "other",
+}
+
+export interface Feedback {
+  id: string;
+  category: FeedbackCategory;
+  title: string;
+  description: string;
+  user_id?: string;
+  status: FeedbackStatus;
+  createdAt: number;
+  metadata?: any;
+}
 
 export interface ChapterFeedback {
-  id: string;
   bookSlug: string;
   bookTitle: string;
   chapterSlug: string;
   chapterTitle: string;
   errorMessage: string;
   userMessage?: string;
-  userEmail?: string;
-  userId?: string;
-  status: FeedbackStatus;
-  createdAt: number;
-  resolvedAt?: number;
-}
-
-export interface GeneralFeedback {
-  id: string;
-  category: FeedbackCategory;
-  title: string;
-  description: string;
-  userEmail?: string;
-  userId?: string;
-  status: FeedbackStatus;
-  createdAt: number;
-  updatedAt?: number;
 }
