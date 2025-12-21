@@ -109,24 +109,26 @@ export default function FeedbackPage() {
   };
 
   const notLogin = (
-    <Alert className="mb-6">
-      <Info className="h-4 w-4" />
-      <AlertDescription className="flex flex-col items-center justify-between gap-4">
-        <span className="text-sm">
-          Để web hoạt động ổn định, chống spam. Bạn vui lòng đăng nhập để gửi
-          feedback.
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push("/login?redirect=/feedback")}
-          className="shrink-0"
-        >
-          <LogIn className="mr-2 h-4 w-4" />
-          Đăng nhập
-        </Button>
-      </AlertDescription>
-    </Alert>
+    <div>
+      <Alert className="mb-6" variant="warning">
+        <AlertDescription className="flex flex-rol gap-4">
+          <Info className="h-4 w-4" />
+          <span className="text-sm">
+            Để web hoạt động ổn định, chống spam. Bạn vui lòng đăng nhập để gửi
+            feedback.
+          </span>
+        </AlertDescription>
+      </Alert>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => router.push("/login?redirect=/feedback")}
+        className="shrink-0"
+      >
+        <LogIn className="mr-2 h-4 w-4" />
+        Đăng nhập
+      </Button>
+    </div>
   );
 
   const feedBackForm = (
