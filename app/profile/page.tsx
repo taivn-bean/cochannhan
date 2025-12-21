@@ -34,7 +34,6 @@ export default function ProfilePage() {
     useReaderSettingsStore();
   const { items: recentAccess, overrideRecentAccess } = useRecentAccessStore();
   const { setTheme } = useTheme();
-  console.log({ readerSettings });
 
   if (!user) {
     return (
@@ -43,6 +42,11 @@ export default function ProfilePage() {
       </div>
     );
   }
+
+  const displayName =
+    user.user_metadata?.username ||
+    user.user_metadata?.full_name ||
+    "Chưa cập nhật";
 
   if (isLoading) {
     return (
@@ -77,9 +81,7 @@ export default function ProfilePage() {
               <UserIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">Tên</p>
-                <p className="font-medium">
-                  {user.user_metadata?.full_name || "Chưa cập nhật"}
-                </p>
+                <p className="font-medium">{displayName}</p>
               </div>
             </div>
 
@@ -100,6 +102,10 @@ export default function ProfilePage() {
             </div>
             <p className="text-sm text-muted-foreground">
               Đồng bộ cài đặt đọc, bookmarks và lịch sử truy cập với cloud
+            </p>
+            <p className="text-xs text-yellow-500 bg-yellow-500/10 p-2 rounded-md border border-yellow-500">
+              <strong>Lưu ý:</strong> Đồng bộ chỉ thực hiện thủ công. Dữ liệu
+              không tự động đồng bộ.
             </p>
             <div className="flex flex-col gap-3">
               <Button

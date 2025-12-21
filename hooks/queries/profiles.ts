@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UserProfile } from "@/types/profile";
 import { useAuthStore } from "@/stores/auth.store";
 import { profileService } from "@/services/profile.service";
+import { toast } from "sonner";
 
 const PROFILE_QUERY_KEY = {
   PROFILE: (userId?: string) => ["profile", userId],
@@ -65,9 +66,15 @@ export const useUpdateProfile = () => {
           context.previous
         );
       }
+      toast.error("Cập nhật thất bại", {
+        description: err.message,
+      });
     },
     onSuccess: (data) => {
       queryClient.setQueryData(PROFILE_QUERY_KEY.PROFILE(user?.id), data);
+      toast.success("Cập nhật thành công", {
+        description: "Dữ liệu của bạn đã được cập nhật",
+      });
     },
   });
 };

@@ -51,7 +51,7 @@ export function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center space-x-2 sm:space-x-4">
+        <div className="flex items-center gap-2">
           <ModeToggle />
 
           {user ? (

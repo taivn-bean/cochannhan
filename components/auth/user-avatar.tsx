@@ -18,19 +18,22 @@ import { useRouter } from "next/navigation";
 
 export function UserAvatar({ className }: { className?: string }) {
   const { user } = useAuthStore();
-  const username = user?.user_metadata?.full_name;
+  const displayName =
+    user?.user_metadata?.username ||
+    user?.user_metadata?.full_name ||
+    "Chưa cập nhật";
   const { mutate: logout } = useLogout();
 
   const router = useRouter();
 
   // Get user initials from display name or email
   const getInitials = () => {
-    if (username) {
-      const names = username.split(" ");
+    if (displayName) {
+      const names = displayName.split(" ");
       if (names.length >= 2) {
         return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
       }
-      return username.substring(0, 2).toUpperCase();
+      return displayName.substring(0, 2).toUpperCase();
     }
     if (user?.email) {
       return user.email.substring(0, 2).toUpperCase();
@@ -53,10 +56,10 @@ export function UserAvatar({ className }: { className?: string }) {
           <Avatar className={cn(className)}>
             <AvatarImage
               src={user?.user_metadata?.avatar_url || undefined}
-              alt={username || user?.email || "User avatar"}
+              alt={displayName || user?.email || "User avatar"}
             />
             <AvatarFallback className="bg-primary/10 text-primary font-medium">
-              {username ? getInitials() : <User className="h-4 w-4" />}
+              {displayName ? getInitials() : <User className="h-4 w-4" />}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -64,7 +67,7 @@ export function UserAvatar({ className }: { className?: string }) {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{username}</p>
+            <p className="text-sm font-medium leading-none">{displayName}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {user?.email}
             </p>

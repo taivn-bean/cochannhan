@@ -23,9 +23,9 @@ export class ProfileService {
     };
     const { data: insertedData, error } = await supabase
       .from(PROFILE_SCHEMA)
-      .upsert(profileData)
+      .insert(profileData)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return insertedData;
   };
@@ -36,16 +36,12 @@ export class ProfileService {
       .update(data)
       .eq("user_id", uid)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     if (!updatedData) {
-      const { data: insertedData, error } = await supabase
-        .from(PROFILE_SCHEMA)
-        .insert({ ...data, user_id: uid });
-      if (error) throw error;
-      return insertedData;
+      return this.createProfileInfo(uid, data);
     }
-    return data;
+    return updatedData;
   };
 }
 
