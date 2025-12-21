@@ -31,11 +31,21 @@ export class ProfileService {
   };
 
   updateProfileInfo = async (uid: string, data: Partial<UserProfile>) => {
-    const { error } = await supabase
+    const { data: updatedData, error } = await supabase
       .from(PROFILE_SCHEMA)
-      .upsert(data)
-      .eq("user_id", uid);
+      .update(data)
+      .eq("user_id", uid)
+      .select()
+      .single();
     if (error) throw error;
+    if (!updatedData) {
+      const { data: insertedData, error } = await supabase
+        .from(PROFILE_SCHEMA)
+        .insert({ ...data, user_id: uid });
+      if (error) throw error;
+      return insertedData;
+    }
+    return data;
   };
 }
 

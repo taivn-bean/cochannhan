@@ -1,3 +1,4 @@
+"use client";
 import { useAuthCallback } from "@/hooks/queries/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";

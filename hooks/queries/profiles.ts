@@ -3,10 +3,14 @@ import type { UserProfile } from "@/types/profile";
 import { useAuthStore } from "@/stores/auth.store";
 import { profileService } from "@/services/profile.service";
 
+const PROFILE_QUERY_KEY = {
+  PROFILE: (userId?: string) => ["profile", userId],
+};
+
 export const useProfile = () => {
   const { user } = useAuthStore();
   return useQuery({
-    queryKey: ["profile", user?.id],
+    queryKey: PROFILE_QUERY_KEY.PROFILE(user?.id),
     queryFn: () => {
       if (!user) throw new Error("No user");
       return profileService.getProfileInfo(user.id);
@@ -24,7 +28,7 @@ export const useCreateProfile = () => {
       return profileService.createProfileInfo(user.id, data);
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(["profile", user?.id], data);
+      queryClient.setQueryData(PROFILE_QUERY_KEY.PROFILE(user?.id), data);
     },
   });
 };
@@ -38,11 +42,15 @@ export const useUpdateProfile = () => {
       return profileService.updateProfileInfo(user.id, data);
     },
     onMutate: async (newData) => {
-      await queryClient.cancelQueries({ queryKey: ["profile", user?.id] });
-      const previous = queryClient.getQueryData(["profile", user?.id]);
+      await queryClient.cancelQueries({
+        queryKey: PROFILE_QUERY_KEY.PROFILE(user?.id),
+      });
+      const previous = queryClient.getQueryData(
+        PROFILE_QUERY_KEY.PROFILE(user?.id)
+      );
 
       if (previous) {
-        queryClient.setQueryData(["profile", user?.id], {
+        queryClient.setQueryData(PROFILE_QUERY_KEY.PROFILE(user?.id), {
           ...previous,
           ...newData,
         });
@@ -52,11 +60,14 @@ export const useUpdateProfile = () => {
     },
     onError: (err, variables, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(["profile", user?.id], context.previous);
+        queryClient.setQueryData(
+          PROFILE_QUERY_KEY.PROFILE(user?.id),
+          context.previous
+        );
       }
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(["profile", user?.id], data);
+      queryClient.setQueryData(PROFILE_QUERY_KEY.PROFILE(user?.id), data);
     },
   });
 };

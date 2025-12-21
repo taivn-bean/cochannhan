@@ -22,7 +22,7 @@ const initialState: RecentAccessState = {
 };
 
 export const recentAccessStore = new Store<RecentAccessState>(
-  loadFromLocalStorage(STORAGE_KEY, initialState),
+  loadFromLocalStorage(STORAGE_KEY, initialState)
 );
 
 recentAccessStore.subscribe(() => {
@@ -36,7 +36,7 @@ export const recentAccessActions = {
     recentAccessStore.setState((state) => {
       // Remove duplicate if exists (same bookSlug + chapterSlug)
       const filteredItems = state.items.filter(
-        (i) => !(i.bookSlug === item.bookSlug),
+        (i) => !(i.bookSlug === item.bookSlug)
       );
 
       // Add new item with timestamp
@@ -53,24 +53,12 @@ export const recentAccessActions = {
       };
     });
   },
-
-  // Get all recent access items (sorted by timestamp, newest first)
-  getRecentAccess: (): Array<RecentAccessItem> => {
-    return recentAccessStore.state.items;
-  },
-
-  // Clear all recent access
-  clearRecentAccess: () => {
-    recentAccessStore.setState({ items: [] });
-  },
-
-  // Remove specific item
-  removeRecentAccess: (bookSlug: string, chapterSlug: string) => {
-    recentAccessStore.setState((state) => ({
-      items: state.items.filter(
-        (i) => !(i.bookSlug === bookSlug && i.chapterSlug === chapterSlug),
-      ),
-    }));
+  overrideRecentAccess: (items: Array<RecentAccessItem>) => {
+    recentAccessStore.setState((state) => {
+      return {
+        items: items,
+      };
+    });
   },
 };
 
@@ -81,10 +69,9 @@ export const useRecentAccessStore = () => {
   const actions = useMemo(
     () => ({
       addRecentAccess: recentAccessActions.addRecentAccess,
-      clearRecentAccess: recentAccessActions.clearRecentAccess,
-      removeRecentAccess: recentAccessActions.removeRecentAccess,
+      overrideRecentAccess: recentAccessActions.overrideRecentAccess,
     }),
-    [],
+    []
   );
 
   return {

@@ -1,6 +1,5 @@
 // stores/bookmarkStore.ts
 import { Store, useStore } from "@tanstack/react-store";
-import { useMemo } from "react";
 import { debounceSave, loadFromLocalStorage } from "@/lib/localstorage";
 
 export interface BookmarkState {
@@ -14,7 +13,7 @@ const initialState: BookmarkState = {
 const STORAGE_KEY = "bookmarks-store";
 
 export const bookmarkStore = new Store<BookmarkState>(
-  loadFromLocalStorage(STORAGE_KEY, initialState),
+  loadFromLocalStorage(STORAGE_KEY, initialState)
 );
 
 bookmarkStore.subscribe(() => {
@@ -52,7 +51,7 @@ const bookmarkActions = {
 
       // ✅ Tạo array MỚI
       const updatedBookmarks = existingBookmarks.filter(
-        (b) => b !== chapterSlug,
+        (b) => b !== chapterSlug
       );
 
       // Nếu không có thay đổi, return state cũ
@@ -79,23 +78,18 @@ const bookmarkActions = {
     }
   },
 
-  // Get bookmarks for a book
-  getBookmarks: (bookSlug: string): Array<string> => {
-    return bookmarkStore.state.bookmarks[bookSlug];
-  },
-
-  // Clear all bookmarks for a book
-  clearBookmarks: (bookSlug: string) => {
-    bookmarkStore.setState((state) => {
-      const { [bookSlug]: _, ...rest } = state.bookmarks;
-      return { bookmarks: rest };
-    });
-  },
-
   // Check if chapter is bookmarked
   isBookmarked: (bookSlug: string, chapterSlug: string): boolean => {
     const bookmarks = bookmarkStore.state.bookmarks[bookSlug] ?? [];
     return bookmarks?.includes(chapterSlug);
+  },
+
+  overrideBookmarks: (bookmarks: Record<string, Array<string>>) => {
+    bookmarkStore.setState((state) => {
+      return {
+        bookmarks: bookmarks,
+      };
+    });
   },
 };
 
@@ -104,10 +98,6 @@ export const useBookmarkStore = () => {
 
   return {
     bookmarks,
-    addBookmark: bookmarkActions.addBookmark,
-    removeBookmark: bookmarkActions.removeBookmark,
-    toggleBookmark: bookmarkActions.toggleBookmark,
-    clearBookmarks: bookmarkActions.clearBookmarks,
-    isBookmarked: bookmarkActions.isBookmarked,
+    ...bookmarkActions,
   };
 };

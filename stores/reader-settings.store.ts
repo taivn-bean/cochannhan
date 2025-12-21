@@ -14,7 +14,7 @@ const initialState: ReaderSettings = {
 };
 
 export const readerSettingsStore = new Store<ReaderSettings>(
-  loadFromLocalStorage(STORAGE_KEY, initialState),
+  loadFromLocalStorage(STORAGE_KEY, initialState)
 );
 
 // ✅ Auto-save to localStorage on state change
@@ -41,22 +41,21 @@ export const readerSettingsActions = {
   getSettings: (): ReaderSettings => {
     return readerSettingsStore.state;
   },
+  overrideSettings: (settings: ReaderSettings) => {
+    readerSettingsStore.setState((state) => {
+      return {
+        ...settings,
+      };
+    });
+  },
 };
 
 // ✅ Custom hook
 export const useReaderSettingsStore = () => {
   const settings = useStore(readerSettingsStore);
 
-  const actions = useMemo(
-    () => ({
-      updateSettings: readerSettingsActions.updateSettings,
-      resetSettings: readerSettingsActions.resetSettings,
-    }),
-    [],
-  );
-
   return {
     settings,
-    ...actions,
+    ...readerSettingsActions,
   };
 };

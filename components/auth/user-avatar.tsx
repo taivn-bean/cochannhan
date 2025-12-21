@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 
 export function UserAvatar({ className }: { className?: string }) {
   const { user } = useAuthStore();
-  const username = user?.user_metadata?.username;
+  const username = user?.user_metadata?.full_name;
   const { mutate: logout } = useLogout();
 
   const router = useRouter();

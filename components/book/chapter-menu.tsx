@@ -31,8 +31,9 @@ function ChapterMenu({
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [showBookmarks, setShowBookmarks] = useState<CheckedState>(false);
-  const { bookmarks = [], toggleBookmark } = useBookmarkStore();
-  const bookmarksForBook = bookmarks?.[book?.slug ?? ""] ?? [""];
+  const { bookmarks = {}, toggleBookmark } = useBookmarkStore();
+  const bookmarksForBook =
+    book?.slug && bookmarks[book.slug] ? bookmarks[book.slug] : [];
 
   const handleChapterSelect = (chapter: ChapterListItem) => {
     router.push(`/${book?.slug}/${chapter.slug}`);

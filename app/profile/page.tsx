@@ -20,16 +20,21 @@ import { UserAvatar } from "@/components/auth/user-avatar";
 import { useBookmarkStore } from "@/stores/bookmark.store";
 import { useReaderSettingsStore } from "@/stores/reader-settings.store";
 import { useRecentAccessStore } from "@/stores/recent-access.store";
+import { ReaderSettings } from "@/types/type";
+import { useTheme } from "next-themes";
 
 export default function ProfilePage() {
   const { user } = useAuthStore();
-  const { data: profile, isLoading, refetch: refetchProfile } = useProfile();
+  const { data: profile, isLoading } = useProfile();
   const { mutate: updateProfile, isPending: isUploading } = useUpdateProfile();
   const [showLoadConfirm, setShowLoadConfirm] = useState(false);
 
-  const { bookmarks } = useBookmarkStore();
-  const { settings: readerSettings } = useReaderSettingsStore();
-  const { items: recentAccess } = useRecentAccessStore();
+  const { bookmarks, overrideBookmarks } = useBookmarkStore();
+  const { settings: readerSettings, overrideSettings } =
+    useReaderSettingsStore();
+  const { items: recentAccess, overrideRecentAccess } = useRecentAccessStore();
+  const { setTheme } = useTheme();
+  console.log({ readerSettings });
 
   if (!user) {
     return (
@@ -47,6 +52,14 @@ export default function ProfilePage() {
     );
   }
 
+  const syncDataFromCloud = async () => {
+    setShowLoadConfirm(false);
+    overrideBookmarks(profile?.bookmarks ?? {});
+    overrideSettings((profile?.reader_settings as ReaderSettings) ?? {});
+    overrideRecentAccess(profile?.recent_access ?? []);
+    setTheme(profile?.reader_settings?.theme ?? "light");
+  };
+
   return (
     <div className="container mx-auto px-4 py-4 max-w-2xl">
       <Card>
@@ -56,7 +69,7 @@ export default function ProfilePage() {
         <CardContent className="space-y-4">
           {/* Avatar */}
           <div className="flex justify-center">
-            <UserAvatar className="h-20 w-20" />
+            <UserAvatar className="h-16 w-16" />
           </div>
 
           <div className="space-y-2">
@@ -65,7 +78,7 @@ export default function ProfilePage() {
               <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">Tên</p>
                 <p className="font-medium">
-                  {user.user_metadata?.username || "Chưa cập nhật"}
+                  {user.user_metadata?.full_name || "Chưa cập nhật"}
                 </p>
               </div>
             </div>
@@ -92,6 +105,7 @@ export default function ProfilePage() {
               <Button
                 onClick={() => {
                   updateProfile({
+                    user_id: user.id,
                     bookmarks: bookmarks,
                     reader_settings: readerSettings,
                     recent_access: recentAccess,
@@ -127,10 +141,7 @@ export default function ProfilePage() {
       <ConfirmationDialog
         isOpen={showLoadConfirm}
         onClose={() => setShowLoadConfirm(false)}
-        onConfirm={async () => {
-          setShowLoadConfirm(false);
-          const value = await refetchProfile();
-        }}
+        onConfirm={syncDataFromCloud}
         title="Xác nhận tải từ Cloud"
         description="Dữ liệu local (bookmarks, cài đặt đọc, lịch sử) sẽ bị ghi đè bởi dữ liệu từ cloud. Bạn có chắc chắn?"
         confirmText="Xác nhận"
