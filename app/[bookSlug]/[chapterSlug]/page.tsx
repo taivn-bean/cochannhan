@@ -94,7 +94,7 @@ export default function ChapterPage() {
       {isLoading && <LoadingSpinner />}
       <div>
         {!isLoading && chapterData?.currentChapter && book && (
-          <div className="pb-20">
+          <div className="pb-10">
             <ReaderContent
               showControl={showControl}
               setShowControl={setShowControl}

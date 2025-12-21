@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { fontMap } from "./fontMap";
 import { GoogleAnalytics } from "@next/third-parties/google";
@@ -58,7 +59,7 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#3b82f6" />
         <meta name="msapplication-tap-highlight" content="no" />
       </head>
-      <body className={fontVars} suppressHydrationWarning>
+      <body className={`${fontVars} flex flex-col min-h-screen`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -68,7 +69,10 @@ export default function RootLayout({
           <QueryProvider>
             <AuthProvider>
               <Header />
-              {children}
+              <div className="flex-1">
+                {children}
+              </div>
+              <Footer />
               <ScrollToTop />
               <Toaster />
             </AuthProvider>
