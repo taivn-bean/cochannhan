@@ -1,87 +1,80 @@
-// import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-// import { CACHE_TIME } from "./cache.const";
-// import type { UserProfile } from "@/types/profile";
-// import { profileService } from "@/services/profile.service";
-// import { useAuth } from "@/hooks/useAuth";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { UserProfile } from "@/types/profile";
+import { useAuthStore } from "@/stores/auth.store";
+import { profileService } from "@/services/profile.service";
+import { toast } from "sonner";
 
-// export const useProfile = () => {
-//   const { user, isAuthenticated } = useAuth();
-//   const queryClient = useQueryClient();
+const PROFILE_QUERY_KEY = {
+  PROFILE: (userId?: string) => ["profile", userId],
+};
 
-//   const profileQuery = useQuery({
-//     queryKey: ["profile", user?.uid],
-//     queryFn: () => {
-//       if (!user?.uid) throw new Error("No user");
-//       return profileService.getProfile(user.uid);
-//     },
-//     enabled: !!user?.uid && isAuthenticated,
-//     staleTime: CACHE_TIME.ONE_MONTH,
-//   });
+export const useProfile = () => {
+  const { user } = useAuthStore();
+  return useQuery({
+    queryKey: PROFILE_QUERY_KEY.PROFILE(user?.id),
+    queryFn: () => {
+      if (!user) throw new Error("No user");
+      return profileService.getProfileInfo(user.id);
+    },
+  });
+};
 
-//   const createProfileMutation = useMutation({
-//     mutationFn: (data: Partial<UserProfile>) => {
-//       if (!user?.uid) throw new Error("No user");
-//       return profileService.createProfile(user.uid, data);
-//     },
-//     onSuccess: (data) => {
-//       queryClient.setQueryData(["profile", user?.uid], data);
-//     },
-//   });
+export const useCreateProfile = () => {
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
 
-//   const updateProfileMutation = useMutation({
-//     mutationFn: (data: Partial<UserProfile>) => {
-//       if (!user?.uid) throw new Error("No user");
-//       return profileService.updateProfile(user.uid, data);
-//     },
-//     onMutate: async (newData) => {
-//       await queryClient.cancelQueries({ queryKey: ["profile", user?.uid] });
-//       const previous = queryClient.getQueryData(["profile", user?.uid]);
+  return useMutation({
+    mutationFn: (data: Partial<UserProfile>) => {
+      if (!user?.id) throw new Error("No user");
+      return profileService.createProfileInfo(user.id, data);
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(PROFILE_QUERY_KEY.PROFILE(user?.id), data);
+    },
+  });
+};
 
-//       if (previous) {
-//         queryClient.setQueryData(["profile", user?.uid], {
-//           ...previous,
-//           ...newData,
-//           updatedAt: new Date().toISOString(),
-//         });
-//       }
+export const useUpdateProfile = () => {
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<UserProfile>) => {
+      if (!user?.id) throw new Error("No user");
+      return profileService.updateProfileInfo(user.id, data);
+    },
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({
+        queryKey: PROFILE_QUERY_KEY.PROFILE(user?.id),
+      });
+      const previous = queryClient.getQueryData(
+        PROFILE_QUERY_KEY.PROFILE(user?.id)
+      );
 
-//       return { previous };
-//     },
-//     onError: (err, variables, context) => {
-//       if (context?.previous) {
-//         queryClient.setQueryData(["profile", user?.uid], context.previous);
-//       }
-//     },
-//     onSuccess: (data) => {
-//       queryClient.setQueryData(["profile", user?.uid], data);
-//     },
-//   });
+      if (previous) {
+        queryClient.setQueryData(PROFILE_QUERY_KEY.PROFILE(user?.id), {
+          ...previous,
+          ...newData,
+        });
+      }
 
-//   const { data: profile } = profileQuery;
-
-//   if (
-//     isAuthenticated &&
-//     user &&
-//     profileQuery.isSuccess &&
-//     !profile &&
-//     !createProfileMutation.isPending
-//   ) {
-//     createProfileMutation.mutate({
-//       displayName: user.displayName || "",
-//       email: user.email || "",
-//       photoURL: user.photoURL || undefined,
-//     });
-//   }
-
-//   return {
-//     profile: profileQuery.data,
-//     isLoading: profileQuery.isLoading || createProfileMutation.isPending,
-//     isError: profileQuery.isError,
-//     error: profileQuery.error,
-
-//     updateProfile: updateProfileMutation.mutate,
-//     isUpdating: updateProfileMutation.isPending,
-
-//     refetch: profileQuery.refetch,
-//   };
-// };
+      return { previous };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          PROFILE_QUERY_KEY.PROFILE(user?.id),
+          context.previous
+        );
+      }
+      toast.error("Cập nhật thất bại", {
+        description: err.message,
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(PROFILE_QUERY_KEY.PROFILE(user?.id), data);
+      toast.success("Cập nhật thành công", {
+        description: "Dữ liệu của bạn đã được cập nhật",
+      });
+    },
+  });
+};

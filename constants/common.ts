@@ -22,6 +22,16 @@ export const mockBooks: Book[] = [
     chapters: 40,
     coverImage: "/images/nhan-to-truyen.jpg",
   },
+  {
+    id: "2",
+    author: "Gu Zhen Re",
+    cover: "",
+    description: "",
+    slug: "reverend-insanity",
+    title: "Reverend Insanity",
+    chapters: 2334,
+    coverImage: "/images/reverend-insanity.jpg",
+  }
 ];
 
 export const LOCAL_STORAGE_KEY = {

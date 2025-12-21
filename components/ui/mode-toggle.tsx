@@ -3,7 +3,7 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
-import { useReaderSettingsStore } from "@/stores/readerSettingsStore";
+import { useReaderSettingsStore } from "@/stores/reader-settings.store";
 
 export function ModeToggle() {
   const { settings, updateSettings } = useReaderSettingsStore();

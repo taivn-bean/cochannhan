@@ -12,7 +12,7 @@ import type { CheckedState } from "@radix-ui/react-checkbox";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useBookmarkStore } from "@/stores/bookmarkStore";
+import { useBookmarkStore } from "@/stores/bookmark.store";
 import { useRouter } from "next/navigation";
 
 interface ChapterMenuProps {
@@ -31,7 +31,9 @@ function ChapterMenu({
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [showBookmarks, setShowBookmarks] = useState<CheckedState>(false);
-  const { bookmarks = [], toggleBookmark } = useBookmarkStore(book?.slug || "");
+  const { bookmarks = {}, toggleBookmark } = useBookmarkStore();
+  const bookmarksForBook =
+    book?.slug && bookmarks[book.slug] ? bookmarks[book.slug] : [];
 
   const handleChapterSelect = (chapter: ChapterListItem) => {
     router.push(`/${book?.slug}/${chapter.slug}`);
@@ -43,9 +45,9 @@ function ChapterMenu({
         chapter.title.toLowerCase().includes(searchQuery.toLowerCase())
       )
       .filter((chapter) =>
-        showBookmarks ? bookmarks.includes(chapter.slug) : true
+        showBookmarks ? bookmarksForBook?.includes(chapter.slug) : true
       );
-  }, [chapterList, searchQuery, showBookmarks, bookmarks]);
+  }, [chapterList, searchQuery, showBookmarks, bookmarksForBook]);
 
   const currentIndex = useMemo(
     () => filteredChapters.findIndex((c) => c.id === currentChapter?.id),
@@ -63,10 +65,10 @@ function ChapterMenu({
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => toggleBookmark(chapter.slug)}
+          onClick={() => toggleBookmark(book?.slug || "", chapter.slug)}
           className="p-2 h-8 w-8 shrink-0"
         >
-          {bookmarks.includes(chapter.slug) ? (
+          {bookmarksForBook?.includes(chapter.slug) ? (
             <BookmarkCheck className="h-4 w-4 text-yellow-500" />
           ) : (
             <Bookmark className="h-4 w-4" />
@@ -95,6 +97,7 @@ function ChapterMenu({
   return (
     <div className="p-2 space-y-4">
       <Input
+        autoFocus={false}
         placeholder="Tìm chương..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}

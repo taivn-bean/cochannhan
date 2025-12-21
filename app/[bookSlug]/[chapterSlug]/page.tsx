@@ -13,8 +13,8 @@ import {
   useFetchChapterData,
   useFetchChapterList,
 } from "@/hooks/queries/books";
-import { recentAccessActions } from "@/stores/recentAccessStore";
-import { useReaderSettingsStore } from "@/stores/readerSettingsStore";
+import { recentAccessActions } from "@/stores/recent-access.store";
+import { useReaderSettingsStore } from "@/stores/reader-settings.store";
 import { useParams, useRouter } from "next/navigation";
 
 export default function ChapterPage() {
