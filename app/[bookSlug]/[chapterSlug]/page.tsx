@@ -16,6 +16,7 @@ import {
 import { recentAccessActions } from "@/stores/recent-access.store";
 import { useReaderSettingsStore } from "@/stores/reader-settings.store";
 import { useParams, useRouter } from "next/navigation";
+import { RandomTips } from "@/components/tips/random-tips";
 
 export default function ChapterPage() {
   const params = useParams();
@@ -94,7 +95,7 @@ export default function ChapterPage() {
       {isLoading && <LoadingSpinner />}
       <div>
         {!isLoading && chapterData?.currentChapter && book && (
-          <div className="pb-10">
+          <div className="pb-6">
             <ReaderContent
               showControl={showControl}
               setShowControl={setShowControl}
@@ -111,6 +112,7 @@ export default function ChapterPage() {
           </div>
         )}
       </div>
+      <RandomTips />
     </div>
   );
 }
