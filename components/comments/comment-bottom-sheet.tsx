@@ -33,11 +33,11 @@ export function CommentBottomSheet({
   const {
     data,
     isLoading,
+    isFetched,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
   } = useComments(bookSlug, chapterSlug);
-  console.log(isLoading )
 
   // Flatten all pages into one array
   const comments = data?.pages.flatMap((page) => page.comments) || [];
@@ -72,9 +72,9 @@ export function CommentBottomSheet({
           {/* Comments List */}
           <ScrollArea className="flex-1 px-4">
             <div className="space-y-4 py-4">
-              {isLoading ? (
+              {isLoading && !isFetched ? (
                 <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
+                  {[1].map((i) => (
                     <div key={i} className="space-y-3">
                       <div className="flex items-start gap-3">
                         <Skeleton className="h-10 w-10 rounded-full" />
@@ -96,10 +96,7 @@ export function CommentBottomSheet({
               ) : (
                 rootComments.map((comment) => (
                   <div key={comment.id} className="space-y-3">
-                    <CommentItem
-                      comment={comment}
-                      currentUserId={user?.id}
-                    />
+                    <CommentItem comment={comment} currentUserId={user?.id} />
                     {/* Render Replies */}
                     {getReplies(comment.id).length > 0 && (
                       <div className="pl-4 space-y-3 border-l-2 border-muted ml-2">
@@ -169,7 +166,7 @@ export function CommentBottomSheet({
                   // Scroll to bottom after adding comment
                   setTimeout(() => {
                     const scrollArea = document.querySelector(
-                      '[data-radix-scroll-area-viewport]'
+                      "[data-radix-scroll-area-viewport]"
                     );
                     if (scrollArea) {
                       scrollArea.scrollTop = scrollArea.scrollHeight;
