@@ -1,6 +1,6 @@
 "use client";
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import ChapterMenuDrawer from "@/components/reader/chapter-menu-drawer";
 import { ReaderContent } from "@/components/reader/reader-content";
@@ -14,12 +14,19 @@ import {
   useFetchChapterList,
 } from "@/hooks/queries/books";
 import { recentAccessActions } from "@/stores/recent-access.store";
-import { useReaderSettingsStore } from "@/stores/reader-settings.store";
+import {
+  useReaderSettingsStore,
+  initialStateSettings,
+} from "@/stores/reader-settings.store";
 import { useParams, useRouter } from "next/navigation";
 import { RandomTips } from "@/components/tips/random-tips";
 import { CommentFloatButton } from "@/components/comments/comment-float-button";
 import { CommentBottomSheet } from "@/components/comments/comment-bottom-sheet";
 import { useCommentCount } from "@/hooks/queries/comments";
+import { useUpdateProfile } from "@/hooks/queries/profiles";
+import { useAuthStore } from "@/stores/auth.store";
+import { useBookmarkStore } from "@/stores/bookmark.store";
+import { useRecentAccessStore } from "@/stores/recent-access.store";
 
 export default function ChapterPage() {
   const params = useParams();
@@ -42,6 +49,38 @@ export default function ChapterPage() {
   const { data: commentCount = 0 } = useCommentCount(bookSlug, chapterSlug);
 
   const { settings } = useReaderSettingsStore();
+  const { user } = useAuthStore();
+  const { mutate: updateProfile } = useUpdateProfile({ showMessage: false });
+  const { bookmarks } = useBookmarkStore();
+  const { items: recentAccess } = useRecentAccessStore();
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ✅ Auto sync data from local to cloud (debounced)
+  useEffect(() => {
+    if (user?.id) {
+      // Clear previous timeout
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+
+      // Debounce sync to avoid too many API calls
+      syncTimeoutRef.current = setTimeout(() => {
+        updateProfile({
+          user_id: user.id,
+          bookmarks: bookmarks,
+          reader_settings: settings,
+          recent_access: recentAccess,
+        });
+      }, 3000); // Wait 3s after last change
+    }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, [user?.id, bookmarks, settings, recentAccess, updateProfile]);
 
   // ✅ Add to recent access when chapter loads
   useEffect(() => {
@@ -119,7 +158,7 @@ export default function ChapterPage() {
         )}
       </div>
       <RandomTips />
-      
+
       {/* Comment Floating Button */}
       {!isLoading && chapterData?.currentChapter && (
         <>

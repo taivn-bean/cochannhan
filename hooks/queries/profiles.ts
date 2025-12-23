@@ -34,7 +34,9 @@ export const useCreateProfile = () => {
   });
 };
 
-export const useUpdateProfile = () => {
+export const useUpdateProfile = ({
+  showMessage = true,
+}: { showMessage?: boolean } = {}) => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   return useMutation({
@@ -66,15 +68,19 @@ export const useUpdateProfile = () => {
           context.previous
         );
       }
-      toast.error("Cập nhật thất bại", {
-        description: err.message,
-      });
+      if (showMessage) {
+        toast.error("Cập nhật thất bại", {
+          description: err.message,
+        });
+      }
     },
     onSuccess: (data) => {
       queryClient.setQueryData(PROFILE_QUERY_KEY.PROFILE(user?.id), data);
-      toast.success("Cập nhật thành công", {
-        description: "Dữ liệu của bạn đã được cập nhật",
-      });
+      if (showMessage) {
+        toast.success("Cập nhật thành công", {
+          description: "Dữ liệu của bạn đã được cập nhật",
+        });
+      }
     },
   });
 };
