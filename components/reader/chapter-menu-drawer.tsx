@@ -7,12 +7,12 @@ import ChapterMenu from "../book/chapter-menu";
 import type { Book, Chapter, ChapterListItem } from "@/types/type";
 import { Button } from "@/components/ui/button";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 interface ChapterMenuProps {
   book: Book;
@@ -30,22 +30,18 @@ function ChapterMenuDrawer({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+      <DrawerTrigger asChild>
         <Button variant="outline">
           <BookOpen className="mr-2 h-4 w-4" />
           Danh sách chương
         </Button>
-      </SheetTrigger>
+      </DrawerTrigger>
 
-      <SheetContent
-        side="bottom"
-        className="p-4 w-full max-h-[85dvh]"
-        aria-describedby={undefined}
-      >
-        <SheetHeader>
-          <SheetTitle>{book.title}</SheetTitle>
-        </SheetHeader>
+      <DrawerContent className="p-4 w-full max-h-[85dvh]">
+        <DrawerHeader>
+          <DrawerTitle>{book.title}</DrawerTitle>
+        </DrawerHeader>
 
         <ChapterMenu
           book={book}
@@ -53,8 +49,8 @@ function ChapterMenuDrawer({
           currentChapter={currentChapter}
           isLoading={isLoading}
         />
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   );
 }
 
