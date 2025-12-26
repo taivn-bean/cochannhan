@@ -30,7 +30,9 @@ export function CommentBottomSheet({
   onOpenChange,
 }: CommentBottomSheetProps) {
   const { user } = useAuthStore();
-  const { data, isLoading, isFetched } = useComments(bookSlug, chapterSlug);
+  const { data, isLoading, isFetched } = useComments(bookSlug, chapterSlug, {
+    enabled: open,
+  });
 
   const comments = data?.tree || [];
   const rootComments = comments.filter((c: CommentWithReplies) => !c.parent_id);

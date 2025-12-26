@@ -25,7 +25,11 @@ export const buildCommentTree = (comments: Comment[]): CommentWithReplies[] => {
   return roots;
 };
 
-export const useComments = (bookSlug: string, chapterSlug: string) => {
+export const useComments = (
+  bookSlug: string,
+  chapterSlug: string,
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryKey: ["comments", bookSlug, chapterSlug],
     queryFn: async () => {
@@ -39,8 +43,11 @@ export const useComments = (bookSlug: string, chapterSlug: string) => {
         tree: buildCommentTree(res.comments),
       };
     },
+    enabled: options?.enabled !== false,
     staleTime: CACHE_TIME.FIVE_MINUTES,
     gcTime: CACHE_TIME.THIRTY_MINUTES,
+    refetchOnMount: false, // Không refetch nếu data đã có trong cache
+    refetchOnWindowFocus: false, // Không refetch khi focus window
   });
 };
 
@@ -68,5 +75,23 @@ export const useCommentCount = (bookSlug: string, chapterSlug: string) => {
     queryFn: () => commentService.countAllComments(bookSlug, chapterSlug),
     staleTime: CACHE_TIME.FIVE_MINUTES,
     gcTime: CACHE_TIME.THIRTY_MINUTES,
+  });
+};
+
+export const useDeleteComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { commentId: string; bookSlug: string; chapterSlug: string }) =>
+      commentService.deleteComment(data.commentId),
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["comments", variables.bookSlug, variables.chapterSlug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["commentCount", variables.bookSlug, variables.chapterSlug],
+      });
+    },
   });
 };

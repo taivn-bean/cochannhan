@@ -1,12 +1,15 @@
 import { useState } from "react";
 import DOMPurify from "dompurify";
 import { formatDistanceToNow } from "date-fns";
+import { Trash2 } from "lucide-react";
 import { CommentForm } from "./comment-form";
 import type { Comment } from "@/types/comment";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth.store";
 import { cn } from "@/lib/utils";
+import { useDeleteComment } from "@/hooks/queries/comments";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 interface CommentItemProps {
   comment: Comment;
@@ -20,7 +23,26 @@ export function CommentItem({
   isReply = false,
 }: CommentItemProps) {
   const [isReplying, setIsReplying] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { user } = useAuthStore();
+  const { mutate: deleteComment, isPending: isDeleting } = useDeleteComment();
+
+  const isOwner = currentUserId === comment.user_id;
+
+  const handleDelete = () => {
+    deleteComment(
+      {
+        commentId: comment.id,
+        bookSlug: comment.book_slug,
+        chapterSlug: comment.chapter_slug,
+      },
+      {
+        onSuccess: () => {
+          setShowDeleteDialog(false);
+        },
+      }
+    );
+  };
 
   const getInitials = (name?: string) => {
     return name ? name.substring(0, 2).toUpperCase() : "U";
@@ -57,7 +79,7 @@ export function CommentItem({
         </div>
 
         {!isReply && user && (
-          <div className="flex items-center gap-4 mt-1 ml-1">
+          <div className="flex items-center gap-2 mt-1 ml-1">
             <Button
               variant="ghost"
               size="sm"
@@ -66,6 +88,18 @@ export function CommentItem({
             >
               {isReplying ? "Hủy" : "Trả lời"}
             </Button>
+            {isOwner && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={isDeleting}
+                className="text-xs h-7 px-2 text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                {isDeleting ? "Đang xóa..." : "Xóa"}
+              </Button>
+            )}
           </div>
         )}
 
@@ -82,6 +116,16 @@ export function CommentItem({
           </div>
         )}
       </div>
+
+      <ConfirmationDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDelete}
+        title="Xóa bình luận"
+        description="Bạn có chắc chắn muốn xóa bình luận này? Hành động này không thể hoàn tác."
+        confirmText="Xóa"
+        cancelText="Hủy"
+      />
     </div>
   );
 }

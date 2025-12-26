@@ -50,7 +50,7 @@ class CommentService {
 
     return {
       comments,
-      nextCursor: roots[roots.length - 1].createdAt,
+      nextCursor: roots.length > 0 ? roots[roots.length - 1].createdAt : null,
     };
   }
 
@@ -85,6 +85,15 @@ class CommentService {
     }
 
     return count ?? 0;
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    const { error } = await supabase
+      .from(COMMENT_SCHEMA)
+      .delete()
+      .eq("id", commentId);
+
+    if (error) throw error;
   }
 }
 
