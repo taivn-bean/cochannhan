@@ -4,10 +4,24 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CACHE_TIME } from "./cache.const";
 import { bookService } from "@/services/book.service";
 
+// Query keys constants
+const BOOK_QUERY_KEYS = {
+  all: ["books"] as const,
+  lists: () => [...BOOK_QUERY_KEYS.all, "list"] as const,
+  detail: (slug: string) => ["book", slug] as const,
+  chapters: {
+    all: (bookSlug: string) => ["chapters", bookSlug] as const,
+    detail: (bookSlug: string, chapterSlug: string) =>
+      ["chapter", bookSlug, chapterSlug] as const,
+    data: (bookSlug: string, chapterSlug: string) =>
+      ["chapterData", bookSlug, chapterSlug] as const,
+  },
+} as const;
+
 // 1. Fetch tất cả Books
 export const useFetchAllBooks = () =>
   useQuery({
-    queryKey: ["books"],
+    queryKey: BOOK_QUERY_KEYS.all,
     queryFn: () => bookService.findAllBooks(),
     staleTime: CACHE_TIME.SIX_HOURS,
     gcTime: CACHE_TIME.SIX_HOURS,
@@ -16,7 +30,7 @@ export const useFetchAllBooks = () =>
 // 2. Fetch Book theo slug
 export const useFetchBookBySlug = (slug: string) =>
   useQuery({
-    queryKey: ["book", slug],
+    queryKey: BOOK_QUERY_KEYS.detail(slug),
     queryFn: () => bookService.fetchBookBySlug(slug),
     staleTime: CACHE_TIME.SIX_HOURS,
     gcTime: CACHE_TIME.SIX_HOURS,
@@ -25,7 +39,7 @@ export const useFetchBookBySlug = (slug: string) =>
 // 3. Fetch ChapterList
 export const useFetchChapterList = (bookSlug: string) =>
   useQuery({
-    queryKey: ["chapters", bookSlug],
+    queryKey: BOOK_QUERY_KEYS.chapters.all(bookSlug),
     queryFn: () => bookService.fetchChapterList(bookSlug),
     staleTime: CACHE_TIME.PERMANENT,
     gcTime: CACHE_TIME.PERMANENT,
@@ -34,7 +48,7 @@ export const useFetchChapterList = (bookSlug: string) =>
 // 4. Fetch Chapter theo slug
 export const useFetchChapterBySlug = (bookSlug: string, chapterSlug: string) =>
   useQuery({
-    queryKey: ["chapter", bookSlug, chapterSlug],
+    queryKey: BOOK_QUERY_KEYS.chapters.detail(bookSlug, chapterSlug),
     queryFn: () => bookService.fetchChapterBySlug(bookSlug, chapterSlug),
     staleTime: CACHE_TIME.PERMANENT,
     gcTime: CACHE_TIME.PERMANENT,
@@ -45,19 +59,19 @@ export const useFetchChapterData = (bookSlug: string, chapterSlug: string) => {
   const queryClient = useQueryClient();
 
   return useQuery({
-    queryKey: ["chapterData", bookSlug, chapterSlug],
+    queryKey: BOOK_QUERY_KEYS.chapters.data(bookSlug, chapterSlug),
     queryFn: async () => {
       try {
         // 1. Lấy chapterList từ cache hoặc fetch
         const chapterList = await queryClient.ensureQueryData({
-          queryKey: ["chapters", bookSlug],
+          queryKey: BOOK_QUERY_KEYS.chapters.all(bookSlug),
           queryFn: () => bookService.fetchChapterList(bookSlug),
           staleTime: CACHE_TIME.PERMANENT, // Đảm bảo consistent với query gốc
         });
 
         // 2. Lấy current chapter từ cache hoặc fetch
         const currentChapter = await queryClient.ensureQueryData({
-          queryKey: ["chapter", bookSlug, chapterSlug],
+          queryKey: BOOK_QUERY_KEYS.chapters.detail(bookSlug, chapterSlug),
           queryFn: () => bookService.fetchChapterBySlug(bookSlug, chapterSlug),
           staleTime: CACHE_TIME.PERMANENT,
         });
@@ -74,7 +88,7 @@ export const useFetchChapterData = (bookSlug: string, chapterSlug: string) => {
         // 5. ✅ PREFETCH nextChapter ở background (không block)
         if (nextMeta) {
           queryClient.prefetchQuery({
-            queryKey: ["chapter", bookSlug, nextMeta.slug],
+            queryKey: BOOK_QUERY_KEYS.chapters.detail(bookSlug, nextMeta.slug),
             queryFn: () =>
               bookService.fetchChapterBySlug(bookSlug, nextMeta.slug),
             staleTime: CACHE_TIME.PERMANENT,

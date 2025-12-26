@@ -1,5 +1,6 @@
+"use client";
+
 import {
-  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -7,6 +8,16 @@ import {
 import { commentService } from "@/services/comment.service";
 import { CACHE_TIME } from "./cache.const";
 import type { Comment, CommentWithReplies } from "@/types/comment";
+
+// Query keys constants
+const COMMENT_QUERY_KEYS = {
+  all: ["comments"] as const,
+  lists: () => [...COMMENT_QUERY_KEYS.all, "list"] as const,
+  list: (bookSlug: string, chapterSlug: string) =>
+    [...COMMENT_QUERY_KEYS.lists(), bookSlug, chapterSlug] as const,
+  count: (bookSlug: string, chapterSlug: string) =>
+    ["commentCount", bookSlug, chapterSlug] as const,
+} as const;
 
 export const buildCommentTree = (comments: Comment[]): CommentWithReplies[] => {
   const map = new Map<string, CommentWithReplies>();
@@ -31,7 +42,7 @@ export const useComments = (
   options?: { enabled?: boolean }
 ) => {
   return useQuery({
-    queryKey: ["comments", bookSlug, chapterSlug],
+    queryKey: COMMENT_QUERY_KEYS.list(bookSlug, chapterSlug),
     queryFn: async () => {
       const res = await commentService.getCommentsWithReplies(
         bookSlug,
@@ -60,10 +71,10 @@ export const useAddComment = () => {
 
     onSuccess: (_, v) => {
       queryClient.invalidateQueries({
-        queryKey: ["comments", v.book_slug, v.chapter_slug],
+        queryKey: COMMENT_QUERY_KEYS.list(v.book_slug, v.chapter_slug),
       });
       queryClient.invalidateQueries({
-        queryKey: ["commentCount", v.book_slug, v.chapter_slug],
+        queryKey: COMMENT_QUERY_KEYS.count(v.book_slug, v.chapter_slug),
       });
     },
   });
@@ -71,7 +82,7 @@ export const useAddComment = () => {
 
 export const useCommentCount = (bookSlug: string, chapterSlug: string) => {
   return useQuery({
-    queryKey: ["commentCount", bookSlug, chapterSlug],
+    queryKey: COMMENT_QUERY_KEYS.count(bookSlug, chapterSlug),
     queryFn: () => commentService.countAllComments(bookSlug, chapterSlug),
     staleTime: CACHE_TIME.FIVE_MINUTES,
     gcTime: CACHE_TIME.THIRTY_MINUTES,
@@ -87,10 +98,10 @@ export const useDeleteComment = () => {
 
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["comments", variables.bookSlug, variables.chapterSlug],
+        queryKey: COMMENT_QUERY_KEYS.list(variables.bookSlug, variables.chapterSlug),
       });
       queryClient.invalidateQueries({
-        queryKey: ["commentCount", variables.bookSlug, variables.chapterSlug],
+        queryKey: COMMENT_QUERY_KEYS.count(variables.bookSlug, variables.chapterSlug),
       });
     },
   });

@@ -1,3 +1,5 @@
+"use client";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -8,20 +10,32 @@ import {
 } from "@/types/feedback";
 import { supabase } from "@/lib/supabase";
 import { feedbackService } from "@/services/feedback.service";
+import { CACHE_TIME } from "./cache.const";
 
 const SCHEMA_NAME = "feedbacks";
 
+// Query keys constants
+const FEEDBACK_QUERY_KEYS = {
+  all: ["feedbacks"] as const,
+  lists: () => [...FEEDBACK_QUERY_KEYS.all, "list"] as const,
+  stats: ["feedback-stats"] as const,
+} as const;
+
 export const useFeedbacks = () => {
   return useQuery({
-    queryKey: ["feedbacks"],
+    queryKey: FEEDBACK_QUERY_KEYS.all,
     queryFn: () => feedbackService.getFeedbacks(),
+    staleTime: CACHE_TIME.FIVE_MINUTES,
+    gcTime: CACHE_TIME.THIRTY_MINUTES,
   });
 };
 
 export const useReviewStats = () => {
   return useQuery({
-    queryKey: ["feedback-stats"],
+    queryKey: FEEDBACK_QUERY_KEYS.stats,
     queryFn: () => feedbackService.getReviewStats(),
+    staleTime: CACHE_TIME.FIVE_MINUTES,
+    gcTime: CACHE_TIME.THIRTY_MINUTES,
   });
 };
 
@@ -40,8 +54,8 @@ export const useUpdateFeedbackStatus = () => {
     },
     onSuccess: () => {
       toast.success("Trạng thái feedback đã được cập nhật thành công");
-      queryClient.invalidateQueries({ queryKey: ["feedbacks"] });
-      queryClient.invalidateQueries({ queryKey: ["feedback-stats"] });
+      queryClient.invalidateQueries({ queryKey: FEEDBACK_QUERY_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: FEEDBACK_QUERY_KEYS.stats });
     },
     onError: () => {
       toast.error(

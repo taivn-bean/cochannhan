@@ -1,0 +1,441 @@
+# Cổ Chân Nhân Ebook Reader - AI Agent Rules
+
+## Project Overview
+This is a Next.js 15 ebook reader application built with TypeScript, React Query, Supabase, and shadcn/ui components. The application supports Vietnamese language and includes features like book reading, comments, bookmarks, and user profiles.
+
+## Tech Stack
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript (strict mode)
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui (Radix UI primitives)
+- **State Management**: React Query (TanStack Query) for all state
+- **Backend**: Supabase
+- **Icons**: Lucide React
+- **Forms**: React Hook Form + Zod validation
+- **Date Handling**: date-fns
+
+## Code Style & Conventions
+
+### File Naming
+- Components: PascalCase (e.g., `CommentItem.tsx`, `ChapterMenuDrawer.tsx`)
+- Hooks: camelCase with `use` prefix (e.g., `useComments.ts`, `useAddComment.ts`)
+- Services: camelCase with `.service.ts` suffix (e.g., `comment.service.ts`)
+- Types: camelCase with `.ts` extension (e.g., `comment.ts`, `type.ts`)
+- Utils: camelCase (e.g., `utils.ts`, `supabase.ts`)
+
+### Directory Structure
+```
+app/                    # Next.js App Router pages
+components/             # React components (all use "use client")
+  ui/                  # shadcn/ui components
+  [feature]/           # Feature-specific components
+hooks/                 # Custom React hooks
+  queries/             # React Query hooks
+services/              # API/service layer
+types/                 # TypeScript type definitions
+lib/                   # Utility functions
+constants/             # Constants and configs
+```
+
+### Import Order
+1. React and Next.js imports
+2. Third-party library imports
+3. Internal imports (use path aliases `@/`)
+4. Type imports (use `import type` when possible)
+5. Relative imports
+
+Example:
+```typescript
+"use client";
+
+import { useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { Trash2 } from "lucide-react";
+import type { Comment } from "@/types/comment";
+import { Button } from "@/components/ui/button";
+```
+
+### Path Aliases
+Always use `@/` prefix for internal imports:
+- `@/components` - Components
+- `@/hooks` - Hooks
+- `@/lib` - Utilities
+- `@/services` - Services
+- `@/types` - Type definitions
+
+## Component Patterns
+
+### Component Structure
+1. **"use client" directive** - REQUIRED for all components in `components/` directory
+2. Imports
+3. Type/interface definitions
+4. Component function
+5. Export
+
+### "use client" Directive
+- **ALL components in `components/` directory MUST start with `"use client"`**
+- This includes feature components, UI components, and any React component
+- Only exception: Server Components in `app/` directory (but those are rare)
+
+### Component Guidelines
+- Use function components with TypeScript interfaces for props
+- Prefer named exports over default exports for components
+- Use `memo()` for performance optimization when appropriate
+- Always define prop interfaces explicitly
+- Use `cn()` utility from `@/lib/utils` for conditional className merging
+
+Example:
+```typescript
+"use client";
+
+import { cn } from "@/lib/utils";
+
+interface ComponentProps {
+  title: string;
+  isActive?: boolean;
+}
+
+export function Component({ title, isActive = false }: ComponentProps) {
+  return <div className={cn("base-class", isActive && "active-class")}>{title}</div>;
+}
+```
+
+### UI Components
+- Use shadcn/ui components from `@/components/ui`
+- Prefer Drawer over Sheet for bottom sheets
+- Use consistent spacing and sizing (Tailwind classes)
+- Follow shadcn/ui patterns and variants
+
+## React Query Patterns
+
+### Query Keys
+- **ALWAYS define query keys as constants at the top of each query file**
+- Use an object to organize all query keys for that feature
+- This makes it easier to maintain and prevents typos
+- Use functions when query keys need parameters
+
+Example:
+```typescript
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { commentService } from "@/services/comment.service";
+import { CACHE_TIME } from "./cache.const";
+
+// Query keys constants - define at top of file
+const COMMENT_QUERY_KEYS = {
+  all: ["comments"] as const,
+  lists: () => [...COMMENT_QUERY_KEYS.all, "list"] as const,
+  list: (bookSlug: string, chapterSlug: string) =>
+    [...COMMENT_QUERY_KEYS.lists(), bookSlug, chapterSlug] as const,
+  count: (bookSlug: string, chapterSlug: string) =>
+    ["commentCount", bookSlug, chapterSlug] as const,
+} as const;
+```
+
+### Query Hooks
+- Place in `hooks/queries/`
+- Start with `"use client"` directive
+- Use `useQuery` for data fetching
+- Always include `enabled` option when conditional fetching is needed
+- Use `staleTime` and `gcTime` from `CACHE_TIME` constants
+- Set `refetchOnMount: false` and `refetchOnWindowFocus: false` when appropriate
+- Use query key constants instead of hardcoded arrays
+- Invalidate queries after mutations
+
+Example:
+```typescript
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { commentService } from "@/services/comment.service";
+import { CACHE_TIME } from "./cache.const";
+
+const COMMENT_QUERY_KEYS = {
+  list: (bookSlug: string, chapterSlug: string) =>
+    ["comments", bookSlug, chapterSlug] as const,
+} as const;
+
+export const useComments = (
+  bookSlug: string,
+  chapterSlug: string,
+  options?: { enabled?: boolean }
+) => {
+  return useQuery({
+    queryKey: COMMENT_QUERY_KEYS.list(bookSlug, chapterSlug),
+    queryFn: async () => {
+      const res = await commentService.getCommentsWithReplies(bookSlug, chapterSlug);
+      return { ...res, tree: buildCommentTree(res.comments) };
+    },
+    enabled: options?.enabled !== false,
+    staleTime: CACHE_TIME.FIVE_MINUTES,
+    gcTime: CACHE_TIME.THIRTY_MINUTES,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+};
+```
+
+### Mutation Hooks
+- Place in `hooks/queries/` (alongside queries)
+- Start with `"use client"` directive
+- Always invalidate related queries in `onSuccess` using query key constants
+- Handle errors appropriately
+
+Example:
+```typescript
+"use client";
+
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { commentService } from "@/services/comment.service";
+
+const COMMENT_QUERY_KEYS = {
+  list: (bookSlug: string, chapterSlug: string) =>
+    ["comments", bookSlug, chapterSlug] as const,
+  count: (bookSlug: string, chapterSlug: string) =>
+    ["commentCount", bookSlug, chapterSlug] as const,
+} as const;
+
+export const useDeleteComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { commentId: string; bookSlug: string; chapterSlug: string }) =>
+      commentService.deleteComment(data.commentId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: COMMENT_QUERY_KEYS.list(variables.bookSlug, variables.chapterSlug),
+      });
+      queryClient.invalidateQueries({
+        queryKey: COMMENT_QUERY_KEYS.count(variables.bookSlug, variables.chapterSlug),
+      });
+    },
+  });
+};
+```
+
+## Service Layer Patterns
+
+### Service Structure
+- Use class-based services
+- Export singleton instance
+- Use Supabase client from `@/lib/supabase`
+- Define schema constants at the top
+- Include error handling
+- Return typed data
+
+Example:
+```typescript
+import { supabase } from "@/lib/supabase";
+import type { Comment } from "@/types/comment";
+
+const COMMENT_SCHEMA = "comments";
+
+class CommentService {
+  async addComment(comment: Omit<Comment, "id" | "createdAt">): Promise<string> {
+    const { data, error } = await supabase
+      .from(COMMENT_SCHEMA)
+      .insert({ ...comment })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+    return data.id;
+  }
+}
+
+export const commentService = new CommentService();
+```
+
+## State Management
+
+### React Query for All State
+- **Use React Query (TanStack Query) for ALL state management**
+- No Zustand or other state management libraries
+- Use React Query for both server state and client state
+- For client-only state, use React Query with local state or React's built-in state hooks (`useState`, `useReducer`)
+- Use React Query's `setQueryData` for optimistic updates
+
+## TypeScript Guidelines
+
+### Type Definitions
+- Place in `types/` directory
+- Use interfaces for object shapes
+- Use `type` for unions, intersections, and computed types
+- Export types explicitly
+- Use `Omit`, `Pick`, `Partial` utilities when appropriate
+
+Example:
+```typescript
+export interface Comment {
+  id: string;
+  book_slug: string;
+  chapter_slug: string;
+  content: string;
+  parent_id: string | null;
+  user_id: string;
+  username: string;
+  avatar_url?: string;
+  createdAt: string;
+}
+
+export type CommentWithReplies = Comment & {
+  replies: Comment[];
+};
+```
+
+### Type Safety
+- Always type function parameters and return values
+- Use `type` imports when importing types only
+- Avoid `any` - use `unknown` if type is truly unknown
+- Use type guards when needed
+
+## Vietnamese Language Support
+
+### Text Content
+- All user-facing text should be in Vietnamese
+- Use appropriate Vietnamese terminology
+- Keep technical terms in English when standard (e.g., "API", "URL")
+- Button labels, error messages, and UI text should be in Vietnamese
+
+Example:
+```typescript
+<Button>Xóa bình luận</Button>
+<p>Chưa có bình luận nào</p>
+```
+
+## Performance Optimization
+
+### React Query
+- Use `enabled` option to prevent unnecessary fetches
+- Set appropriate `staleTime` and `gcTime`
+- Disable `refetchOnMount` and `refetchOnWindowFocus` when appropriate
+- Use `useMemo` and `useCallback` for expensive computations
+
+### Components
+- Use `memo()` for components that receive stable props
+- Lazy load heavy components when possible
+- Optimize re-renders with proper dependency arrays
+
+## Error Handling
+
+### Service Layer
+- Throw errors from services
+- Let React Query handle error states
+- Log errors appropriately
+
+### Components
+- Use React Query's `isError` and `error` states
+- Display user-friendly error messages in Vietnamese
+- Handle loading and error states gracefully
+
+## Form Handling
+
+### React Hook Form + Zod
+- Use `react-hook-form` with `zodResolver`
+- Define schemas with Zod
+- Use `@hookform/resolvers` for integration
+- Validate on submit, not on change
+
+Example:
+```typescript
+const formSchema = z.object({
+  content: z.string().min(1, "Bình luận không được để trống").max(500),
+});
+
+const form = useForm<z.infer<typeof formSchema>>({
+  resolver: zodResolver(formSchema),
+});
+```
+
+## Security
+
+### Data Sanitization
+- Always sanitize user-generated content with DOMPurify
+- Validate all inputs with Zod schemas
+- Never trust client-side data
+
+Example:
+```typescript
+import DOMPurify from "dompurify";
+const sanitizedContent = DOMPurify.sanitize(comment.content);
+```
+
+## Testing & Quality
+
+### Code Quality
+- Follow TypeScript strict mode
+- Use ESLint rules from Next.js
+- Keep components small and focused
+- Extract reusable logic into hooks or utilities
+
+### Best Practices
+- Write self-documenting code with clear variable names
+- Add comments for complex logic only
+- Keep functions pure when possible
+- Avoid side effects in render functions
+
+## Common Patterns
+
+### Conditional Rendering
+```typescript
+{isLoading && <Skeleton />}
+{!isLoading && data && <Content data={data} />}
+{error && <ErrorMessage />}
+```
+
+### Confirmation Dialogs
+Use `ConfirmationDialog` component from `@/components/confirmation-dialog`:
+```typescript
+<ConfirmationDialog
+  isOpen={showDialog}
+  onClose={() => setShowDialog(false)}
+  onConfirm={handleConfirm}
+  title="Xóa bình luận"
+  description="Bạn có chắc chắn muốn xóa?"
+  confirmText="Xóa"
+  cancelText="Hủy"
+/>
+```
+
+### Drawer Usage
+Prefer `Drawer` over `Sheet` for bottom sheets:
+```typescript
+<Drawer open={isOpen} onOpenChange={setIsOpen}>
+  <DrawerTrigger asChild>
+    <Button>Open</Button>
+  </DrawerTrigger>
+  <DrawerContent>
+    <DrawerHeader>
+      <DrawerTitle>Title</DrawerTitle>
+    </DrawerHeader>
+    {/* Content */}
+  </DrawerContent>
+</Drawer>
+```
+
+## When Making Changes
+
+1. **Always check existing patterns** - Look at similar components/hooks/services before creating new ones
+2. **Maintain consistency** - Follow the established patterns in the codebase
+3. **Update types** - Ensure TypeScript types are updated when changing data structures
+4. **Invalidate queries** - Always invalidate related React Query caches after mutations
+5. **Test thoroughly** - Verify changes work in both development and production builds
+6. **Use Vietnamese** - All user-facing text should be in Vietnamese
+7. **Optimize performance** - Consider query optimization, memoization, and lazy loading
+8. **Handle edge cases** - Check for empty arrays, null values, and error states
+
+## Code Review Checklist
+
+- [ ] All components in `components/` have `"use client"` directive
+- [ ] Query keys are defined as constants at the top of query files
+- [ ] TypeScript types are correct and complete
+- [ ] React Query hooks have proper cache invalidation using query key constants
+- [ ] Error handling is implemented
+- [ ] Loading states are handled
+- [ ] Vietnamese text is used for UI
+- [ ] Components follow naming conventions
+- [ ] Imports use path aliases (`@/`)
+- [ ] No Zustand or other state management libraries used
+- [ ] No console.logs in production code
+- [ ] Performance optimizations are considered
+- [ ] Security best practices are followed

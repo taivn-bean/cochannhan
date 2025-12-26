@@ -1,22 +1,31 @@
+"use client";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UserProfile } from "@/types/profile";
 import { useAuthStore } from "@/stores/auth.store";
 import { profileService } from "@/services/profile.service";
 import { toast } from "sonner";
+import { CACHE_TIME } from "./cache.const";
 
-const PROFILE_QUERY_KEY = {
-  PROFILE: (userId?: string) => ["profile", userId],
-};
+// Query keys constants
+const PROFILE_QUERY_KEYS = {
+  all: ["profile"] as const,
+  detail: (userId?: string) => [...PROFILE_QUERY_KEYS.all, userId] as const,
+} as const;
 
 export const useProfile = () => {
   const { user } = useAuthStore();
   return useQuery({
-    queryKey: PROFILE_QUERY_KEY.PROFILE(user?.id),
+    queryKey: PROFILE_QUERY_KEYS.detail(user?.id),
     queryFn: () => {
       if (!user) throw new Error("No user");
       return profileService.getProfileInfo(user.id);
     },
     enabled: !!user,
+    staleTime: CACHE_TIME.FIVE_MINUTES,
+    gcTime: CACHE_TIME.THIRTY_MINUTES,
+    refetchOnMount: false, // Không refetch khi component mount lại
+    refetchOnWindowFocus: false, // Không refetch khi focus window
   });
 };
 
@@ -30,7 +39,7 @@ export const useCreateProfile = () => {
       return profileService.createProfileInfo(user.id, data);
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(PROFILE_QUERY_KEY.PROFILE(user?.id), data);
+      queryClient.setQueryData(PROFILE_QUERY_KEYS.detail(user?.id), data);
     },
   });
 };
@@ -47,14 +56,14 @@ export const useUpdateProfile = ({
     },
     onMutate: async (newData) => {
       await queryClient.cancelQueries({
-        queryKey: PROFILE_QUERY_KEY.PROFILE(user?.id),
+        queryKey: PROFILE_QUERY_KEYS.detail(user?.id),
       });
       const previous = queryClient.getQueryData(
-        PROFILE_QUERY_KEY.PROFILE(user?.id)
+        PROFILE_QUERY_KEYS.detail(user?.id)
       );
 
       if (previous) {
-        queryClient.setQueryData(PROFILE_QUERY_KEY.PROFILE(user?.id), {
+        queryClient.setQueryData(PROFILE_QUERY_KEYS.detail(user?.id), {
           ...previous,
           ...newData,
         });
@@ -65,7 +74,7 @@ export const useUpdateProfile = ({
     onError: (err, variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(
-          PROFILE_QUERY_KEY.PROFILE(user?.id),
+          PROFILE_QUERY_KEYS.detail(user?.id),
           context.previous
         );
       }
@@ -76,7 +85,16 @@ export const useUpdateProfile = ({
       }
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(PROFILE_QUERY_KEY.PROFILE(user?.id), data);
+      // Chỉ update cache với data từ server, không invalidate để tránh refetch
+      // Data đã được update optimistically trong onMutate
+      // Merge với data hiện tại để giữ lại các fields không có trong response
+      queryClient.setQueryData(
+        PROFILE_QUERY_KEYS.detail(user?.id),
+        (old: UserProfile | undefined) => {
+          if (!old) return data;
+          return { ...old, ...data };
+        }
+      );
       if (showMessage) {
         toast.success("Cập nhật thành công", {
           description: "Dữ liệu của bạn đã được cập nhật",

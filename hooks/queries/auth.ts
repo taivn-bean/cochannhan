@@ -4,26 +4,35 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authActions } from "@/stores/auth.store";
 import { toast } from "sonner";
 import { authService } from "@/services/auth.service";
+import { CACHE_TIME } from "./cache.const";
+
+// Query keys constants
+const AUTH_QUERY_KEYS = {
+  user: ["user"] as const,
+  session: ["session"] as const,
+} as const;
 
 // Hook để lấy user hiện tại
 export const useUser = () => {
   return useQuery({
-    queryKey: ["user"],
+    queryKey: AUTH_QUERY_KEYS.user,
     queryFn: async () => {
       return authService.getUser();
     },
-    staleTime: 1000 * 60 * 5, // 5 phút
+    staleTime: CACHE_TIME.FIVE_MINUTES,
+    gcTime: CACHE_TIME.THIRTY_MINUTES,
   });
 };
 
 // Hook để lấy session hiện tại
 export const useSession = () => {
   return useQuery({
-    queryKey: ["session"],
+    queryKey: AUTH_QUERY_KEYS.session,
     queryFn: async () => {
       return authService.getSession();
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: CACHE_TIME.FIVE_MINUTES,
+    gcTime: CACHE_TIME.THIRTY_MINUTES,
   });
 };
 
@@ -45,8 +54,8 @@ export const useLogin = () => {
     },
     onSuccess: (data) => {
       // Cập nhật query cache
-      queryClient.setQueryData(["user"], data.user);
-      queryClient.setQueryData(["session"], data.session);
+      queryClient.setQueryData(AUTH_QUERY_KEYS.user, data.user);
+      queryClient.setQueryData(AUTH_QUERY_KEYS.session, data.session);
 
       // Cập nhật store
       authActions.login(data.user, data.session);
@@ -87,8 +96,8 @@ export const useSignup = () => {
       return authService.signup({ email, password, metadata });
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(["user"], data.user);
-      queryClient.setQueryData(["session"], data.session);
+      queryClient.setQueryData(AUTH_QUERY_KEYS.user, data.user);
+      queryClient.setQueryData(AUTH_QUERY_KEYS.session, data.session);
 
       if (data.user && data.session) {
         authActions.login(data.user, data.session);
@@ -122,8 +131,8 @@ export const useLogout = () => {
     },
     onSuccess: () => {
       // Clear query cache
-      queryClient.setQueryData(["user"], null);
-      queryClient.setQueryData(["session"], null);
+      queryClient.setQueryData(AUTH_QUERY_KEYS.user, null);
+      queryClient.setQueryData(AUTH_QUERY_KEYS.session, null);
       queryClient.clear();
 
       // Reset store
@@ -194,7 +203,7 @@ export const useUpdateUser = () => {
       return authService.updateUser(updates);
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(["user"], data.user);
+      queryClient.setQueryData(AUTH_QUERY_KEYS.user, data.user);
       authActions.updateUser(data.user);
 
       toast.success("Cập nhật thành công", {
@@ -230,8 +239,8 @@ export const useAuthCallback = () => {
       return authService.exchangeCodeForSession(code);
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(["user"], data.user);
-      queryClient.setQueryData(["session"], data.session);
+      queryClient.setQueryData(AUTH_QUERY_KEYS.user, data.user);
+      queryClient.setQueryData(AUTH_QUERY_KEYS.session, data.session);
 
       authActions.login(data.user, data.session);
 
