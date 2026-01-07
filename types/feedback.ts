@@ -23,8 +23,11 @@ export interface Feedback {
   description: string;
   user_id?: string;
   status: FeedbackStatus;
-  createdAt: number;
+  created_at: number;
   metadata?: any;
+  response?: string | null;
+  response_at?: number | null;
+  is_acknowledged?: boolean;
 }
 
 export interface ChapterFeedback {

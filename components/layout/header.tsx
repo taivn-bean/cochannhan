@@ -8,25 +8,37 @@ import { ModeToggle } from "@/components/ui/mode-toggle";
 import { NAV_ITEMS } from "@/constants/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/auth.store";
+import { FeedbackNavItem } from "@/components/feedback/feedback-nav-item";
 
 export function Header() {
   const { user } = useAuthStore();
 
   const NavItems = () => (
     <>
-      {NAV_ITEMS.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1"
-        >
-          {/* Show icon for Support item specifically or generally if improved design needed */}
-          {item.href === "/support" && (
-            <item.icon className={`h-4 w-4 ${item.className || ""}`} />
-          )}
-          <span>{item.label}</span>
-        </Link>
-      ))}
+      {NAV_ITEMS.map((item) => {
+        if (item.href === "/feedback") {
+          return (
+            <FeedbackNavItem
+              key={item.href}
+              href={item.href}
+              label={item.label}
+            />
+          );
+        }
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1"
+          >
+            {/* Show icon for Support item specifically or generally if improved design needed */}
+            {item.href === "/support" && (
+              <item.icon className={`h-4 w-4 ${item.className || ""}`} />
+            )}
+            <span>{item.label}</span>
+          </Link>
+        );
+      })}
     </>
   );
 

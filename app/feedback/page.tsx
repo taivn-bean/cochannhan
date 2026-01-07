@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,6 +10,8 @@ import {
   Lightbulb,
   LogIn,
   MessageSquare,
+  Send,
+  List,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,10 +38,18 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/stores/auth.store";
-import { useSubmitFeedback } from "@/hooks/queries/feedback";
+import {
+  useSubmitFeedback,
+  useFeedbacks,
+  useUserFeedbacks,
+  useUnreadFeedbackCount,
+} from "@/hooks/queries/feedback";
 import { FeedbackCategory, FeedbackStatus } from "@/types/feedback";
 import { useRouter } from "next/navigation";
+import { FeedbackList } from "@/components/feedback/feedback-list";
 
 const categories = [
   { value: "feature", label: "Đề xuất tính năng mới", icon: Lightbulb },
@@ -69,6 +80,27 @@ export default function FeedbackPage() {
   const { user } = useAuthStore();
   const router = useRouter();
   const { mutate: submitFeedback, isPending } = useSubmitFeedback();
+  const {
+    data: allFeedbacksData,
+    isLoading: isLoadingAllFeedbacks,
+    hasNextPage: hasNextPageAll,
+    isFetchingNextPage: isFetchingNextPageAll,
+    fetchNextPage: fetchNextPageAll,
+  } = useFeedbacks(!!user);
+  const {
+    data: userFeedbacksData,
+    isLoading: isLoadingUserFeedbacks,
+    hasNextPage: hasNextPageUser,
+    isFetchingNextPage: isFetchingNextPageUser,
+    fetchNextPage: fetchNextPageUser,
+  } = useUserFeedbacks(user?.id);
+  const { data: unreadCount = 0 } = useUnreadFeedbackCount(user?.id);
+
+  // Flatten infinite query data
+  const allFeedbacks =
+    allFeedbacksData?.pages.flatMap((page) => page.data) || [];
+  const userFeedbacks =
+    userFeedbacksData?.pages.flatMap((page) => page.data) || [];
 
   // ✅ React Hook Form Setup
   const {
@@ -235,13 +267,66 @@ export default function FeedbackPage() {
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Gửi Feedback</CardTitle>
+          <CardTitle className="text-2xl">Feedback</CardTitle>
           <CardDescription>
             Chúng tôi rất mong nhận được ý kiến đóng góp từ bạn để cải thiện ứng
             dụng
           </CardDescription>
         </CardHeader>
-        <CardContent>{user ? feedBackForm : notLogin}</CardContent>
+        <CardContent>
+          {user ? (
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="all" className="flex items-center gap-2">
+                  <List className="h-4 w-4" />
+                  Tất cả Feedback
+                </TabsTrigger>
+                <TabsTrigger value="send" className="flex items-center gap-2">
+                  <Send className="h-4 w-4" />
+                  Gửi Feedback
+                </TabsTrigger>
+                <TabsTrigger
+                  value="mine"
+                  className="flex items-center gap-2 relative"
+                >
+                  <List className="h-4 w-4" />
+                  Feedback của tôi
+                  {unreadCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="ml-1 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold rounded-full min-w-[20px]"
+                    >
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="all" className="mt-6">
+                <FeedbackList
+                  feedbacks={allFeedbacks}
+                  isLoading={isLoadingAllFeedbacks}
+                  hasNextPage={hasNextPageAll}
+                  isFetchingNextPage={isFetchingNextPageAll}
+                  onLoadMore={() => fetchNextPageAll()}
+                />
+              </TabsContent>
+              <TabsContent value="send" className="mt-6">
+                {feedBackForm}
+              </TabsContent>
+              <TabsContent value="mine" className="mt-6">
+                <FeedbackList
+                  feedbacks={userFeedbacks}
+                  isLoading={isLoadingUserFeedbacks}
+                  hasNextPage={hasNextPageUser}
+                  isFetchingNextPage={isFetchingNextPageUser}
+                  onLoadMore={() => fetchNextPageUser()}
+                />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            notLogin
+          )}
+        </CardContent>
       </Card>
     </div>
   );

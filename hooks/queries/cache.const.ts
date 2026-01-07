@@ -1,6 +1,7 @@
 // Constants để dễ maintain
 export const CACHE_TIME = {
   PERMANENT: Infinity,
+  ONE_MINUTE: 1000 * 60,
   FIVE_MINUTES: 1000 * 60 * 5,
   THIRTY_MINUTES: 1000 * 60 * 30,
   ONE_HOUR: 1000 * 60 * 60,

@@ -13,10 +13,15 @@ import {
 } from "@/components/ui/sheet";
 import { NAV_ITEMS } from "@/constants/navigation";
 import { useRouter } from "next/navigation";
+import { useUnreadFeedbackCount } from "@/hooks/queries/feedback";
+import { useAuthStore } from "@/stores/auth.store";
+import { Badge } from "@/components/ui/badge";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { user } = useAuthStore();
+  const { data: unreadCount = 0 } = useUnreadFeedbackCount(user?.id);
 
   const handleNavigate = (path: string) => {
     router.push(path);
@@ -40,17 +45,28 @@ export function MobileNav() {
         </SheetHeader>
         <div className="flex flex-col gap-4 py-4">
           <div className="flex flex-col space-y-3">
-            {NAV_ITEMS.map((item) => (
-              <Button
-                key={item.href}
-                variant="ghost"
-                className="justify-start gap-2"
-                onClick={() => handleNavigate(item.href)}
-              >
-                <item.icon className={`h-4 w-4 ${item.className || ""}`} />
-                {item.label}
-              </Button>
-            ))}
+            {NAV_ITEMS.map((item) => {
+              const isFeedback = item.href === "/feedback";
+              return (
+                <Button
+                  key={item.href}
+                  variant="ghost"
+                  className="justify-start gap-2 relative"
+                  onClick={() => handleNavigate(item.href)}
+                >
+                  <item.icon className={`h-4 w-4 ${item.className || ""}`} />
+                  {item.label}
+                  {isFeedback && unreadCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="ml-auto h-5 w-5 flex items-center justify-center p-0 text-xs font-bold rounded-full min-w-[20px]"
+                    >
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
           </div>
           <Separator />
         </div>
