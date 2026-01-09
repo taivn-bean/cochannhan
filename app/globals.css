@@ -80,3 +80,14 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
+
+/* Selection highlight with contrast color */
+::selection {
+  background-color: hsl(210 80% 50% / 0.3);
+  color: hsl(var(--foreground));
+}
+
+.dark ::selection {
+  background-color: hsl(210 70% 60% / 0.4);
+  color: hsl(var(--foreground));
+}
